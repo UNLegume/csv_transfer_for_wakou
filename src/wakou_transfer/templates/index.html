@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ワコウ送り状CSV変換</title>
+  <style>
+    :root{--ink:#181d26;--muted:#64748b;--blue:#1b61c9;--line:#e0e2e6;--surface:#f8fafc;--danger:#b42318;--success:#067647;--warning:#b54708}
+    *{box-sizing:border-box}body{margin:0;background:#f4f7fb;color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.08px}
+    header{background:#fff;border-bottom:1px solid var(--line)}.header-inner{max-width:1440px;margin:auto;padding:22px 32px;display:flex;align-items:center;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:700}.mark{width:34px;height:34px;border-radius:10px;background:var(--blue);color:white;display:grid;place-items:center}.scope{font-size:13px;color:var(--muted)}
+    main{max-width:1440px;margin:auto;padding:34px 32px 64px}.hero{display:flex;justify-content:space-between;gap:24px;align-items:end;margin-bottom:24px}.hero h1{font-size:30px;line-height:1.2;margin:0 0 8px}.hero p{margin:0;color:var(--muted)}
+    .panel{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 28px rgba(15,48,106,.05);padding:22px;margin-bottom:18px}
+    .form-grid{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr)) auto;gap:14px;align-items:end}label{display:grid;gap:7px;font-size:13px;font-weight:600}input,select{height:42px;border:1px solid #cbd5e1;border-radius:10px;padding:0 12px;font:inherit;background:#fff;color:var(--ink)}input:focus,select:focus{outline:3px solid rgba(27,97,201,.14);border-color:var(--blue)}
+    button{height:42px;border:0;border-radius:11px;padding:0 18px;font-weight:650;cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}.primary{background:var(--blue);color:#fff}.secondary{background:#eef4ff;color:#174ea6}.dark{background:#181d26;color:#fff}
+    .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}.metric{background:#fff;border:1px solid var(--line);border-radius:16px;padding:17px}.metric span{font-size:12px;color:var(--muted)}.metric strong{display:block;font-size:26px;margin-top:5px}
+    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}.toolbar h2{font-size:18px;margin:0}.actions{display:flex;gap:10px;align-items:center}.reexport{width:230px}
+    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:1060px}th{font-size:12px;text-align:left;color:#475569;background:var(--surface);padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap}td{padding:12px;border-bottom:1px solid #edf0f4;font-size:13px;vertical-align:top}tr:last-child td{border-bottom:0}.order-no{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700}.items{max-width:300px;color:#475569}.badge{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:700}.ok{background:#ecfdf3;color:var(--success)}.warn{background:#fff7ed;color:var(--warning)}.error{background:#fef3f2;color:var(--danger)}.muted{color:var(--muted)}
+    .notice{display:none;padding:13px 15px;border-radius:12px;margin-bottom:16px;font-size:13px}.notice.show{display:block}.notice.info{background:#eef4ff;color:#174ea6}.notice.bad{background:#fef3f2;color:var(--danger)}
+    .empty{text-align:center;padding:48px;color:var(--muted)}.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:8px}@keyframes spin{to{transform:rotate(360deg)}}
+    @media(max-width:900px){main,.header-inner{padding-left:18px;padding-right:18px}.form-grid{grid-template-columns:1fr 1fr}.summary{grid-template-columns:1fr 1fr}.hero{display:block}.scope{display:none}}
+  </style>
+</head>
+<body>
+<header><div class="header-inner"><div class="brand"><div class="mark">W</div><div>ワコウ送り状CSV変換</div></div><div class="scope">Shopify読取専用・配送会社への送信は行いません</div></div></header>
+<main>
+  <section class="hero"><div><h1>注文を確認して、送り状CSVを生成</h1><p>決済済み・未発送・未キャンセルの注文のみをShopifyから取得します。</p></div></section>
+  <div id="notice" class="notice"></div>
+  <section class="panel">
+    <form id="searchForm" class="form-grid">
+      <label>注文日（開始）<input id="startDate" type="date" required></label>
+      <label>注文日（終了）<input id="endDate" type="date" required></label>
+      <label>出荷予定日<input id="shippingDate" type="date" required></label>
+      <button id="fetchButton" class="primary" type="submit">Shopifyから注文取得</button>
+    </form>
+  </section>
+  <section id="summary" class="summary" hidden>
+    <div class="metric"><span>対象注文</span><strong id="totalCount">0</strong></div>
+    <div class="metric"><span>ヤマト候補</span><strong id="yamatoCount">0</strong></div>
+    <div class="metric"><span>佐川候補</span><strong id="sagawaCount">0</strong></div>
+    <div class="metric"><span>要確認・エラー</span><strong id="reviewCount">0</strong></div>
+  </section>
+  <section class="panel">
+    <div class="toolbar"><div><h2>注文一覧</h2><div class="muted" style="font-size:12px;margin-top:4px">配送会社を変更した場合は理由を入力してください。</div></div>
+      <div class="actions"><input id="overrideReason" placeholder="配送会社の変更理由"><input id="reexportReason" class="reexport" placeholder="再出力する場合の理由"><button id="yamatoExport" class="secondary" disabled>ヤマトCSV</button><button id="sagawaExport" class="dark" disabled>佐川CSV</button></div>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th><input id="selectAll" type="checkbox"></th><th>注文番号</th><th>配送先</th><th>商品</th><th>自動判定</th><th>出力先</th><th>検証状態</th></tr></thead><tbody id="ordersBody"><tr><td colspan="7" class="empty">条件を指定して注文を取得してください。</td></tr></tbody></table></div>
+  </section>
+</main>
+<script>
+  const state={previewId:null,orders:[]};
+  const $=id=>document.getElementById(id); const today=new Date(); const iso=d=>d.toISOString().slice(0,10);
+  $('startDate').value=iso(today);$('endDate').value=iso(today);const next=new Date(today);next.setDate(next.getDate()+1);$('shippingDate').value=iso(next);
+  function notice(message,bad=false){const el=$('notice');el.textContent=message;el.className=`notice show ${bad?'bad':'info'}`}
+  function setLoading(on){$('fetchButton').disabled=on;$('fetchButton').innerHTML=on?'<span class="spinner"></span>取得中':'Shopifyから注文取得'}
+  function badge(text,kind){const b=document.createElement('span');b.className=`badge ${kind}`;b.textContent=text;return b}
+  function render(){const body=$('ordersBody');body.replaceChildren();if(!state.orders.length){const tr=body.insertRow();const td=tr.insertCell();td.colSpan=7;td.className='empty';td.textContent='対象注文はありません。';}
+    state.orders.forEach(o=>{const tr=body.insertRow();const check=document.createElement('input');check.type='checkbox';check.className='order-check';check.dataset.id=o.order_id;check.disabled=o.errors.length>0;tr.insertCell().append(check);
+      const no=tr.insertCell();no.className='order-no';no.textContent=o.order_number;if(o.already_exported){no.append(document.createElement('br'),badge('出力済み','warn'))}
+      const dest=tr.insertCell();dest.textContent=`${o.recipient_name}\n〒${o.postal_code}\n${o.address}`;dest.style.whiteSpace='pre-line';const items=tr.insertCell();items.className='items';items.textContent=o.items.map(i=>`${i.name} × ${i.quantity}`).join('\n');items.style.whiteSpace='pre-line';
+      const auto=tr.insertCell();auto.append(badge(o.suggested_carrier==='yamato'?'ヤマト':o.suggested_carrier==='sagawa'?'佐川':'要確認',o.suggested_carrier==='needs_review'?'warn':'ok'));const select=document.createElement('select');select.className='carrier-select';select.dataset.id=o.order_id;[['yamato','ヤマト'],['sagawa','佐川']].forEach(([v,t])=>{const op=new Option(t,v);select.add(op)});select.value=o.suggested_carrier==='sagawa'?'sagawa':'yamato';tr.insertCell().append(select);
+      const status=tr.insertCell();if(o.errors.length){status.append(badge('エラー','error'),document.createElement('br'),document.createTextNode(o.errors.map(e=>e.reason).join('／')))}else if(o.suggested_carrier==='needs_review'){status.append(badge('要確認','warn'))}else{status.append(badge('出力可能','ok'))}
+    });$('summary').hidden=false;$('totalCount').textContent=state.orders.length;$('yamatoCount').textContent=state.orders.filter(o=>o.suggested_carrier==='yamato').length;$('sagawaCount').textContent=state.orders.filter(o=>o.suggested_carrier==='sagawa').length;$('reviewCount').textContent=state.orders.filter(o=>o.suggested_carrier==='needs_review'||o.errors.length).length;updateButtons()}
+  function updateButtons(){const any=[...document.querySelectorAll('.order-check:checked')].length>0;$('yamatoExport').disabled=!any;$('sagawaExport').disabled=!any}
+  $('searchForm').addEventListener('submit',async e=>{e.preventDefault();setLoading(true);try{const response=await fetch('/api/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({start_date:$('startDate').value,end_date:$('endDate').value,shipping_date:$('shippingDate').value})});const data=await response.json();if(!response.ok)throw new Error(data.detail||'注文取得に失敗しました');state.previewId=data.preview_id;state.orders=data.orders;render();notice(`${data.orders.length}件の注文を取得しました。内容を確認してください。`)}catch(err){notice(err.message,true)}finally{setLoading(false)}});
+  document.addEventListener('change',e=>{if(e.target.matches('.order-check'))updateButtons();if(e.target===$('selectAll')){document.querySelectorAll('.order-check:not(:disabled)').forEach(c=>c.checked=e.target.checked);updateButtons()}});
+  async function exportCsv(carrier){const ids=[...document.querySelectorAll('.order-check:checked')].map(c=>c.dataset.id);const overrides={},override_reasons={};const generalReason=$('overrideReason').value.trim();ids.forEach(id=>{const order=state.orders.find(o=>o.order_id===id);const selected=document.querySelector(`.carrier-select[data-id="${CSS.escape(id)}"]`).value;if(selected!==order.suggested_carrier){overrides[id]=selected;override_reasons[id]=generalReason}});if(Object.keys(overrides).length&&!generalReason){notice('配送会社を変更した理由を入力してください。',true);return}try{const response=await fetch(`/api/export/${carrier}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({preview_id:state.previewId,order_ids:ids,overrides,override_reasons,reexport_reason:$('reexportReason').value.trim()||null})});if(!response.ok){const data=await response.json();throw new Error(data.detail||'CSV生成に失敗しました')}const blob=await response.blob();const disposition=decodeURIComponent(response.headers.get('content-disposition')||'');const match=disposition.match(/filename\*=UTF-8''(.+)$/);const filename=match?match[1]:`wakou_${carrier}.csv`;const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href);notice(`${carrier==='yamato'?'ヤマト':'佐川'}CSVを生成しました。`)}catch(err){notice(err.message,true)}}
+  $('yamatoExport').addEventListener('click',()=>exportCsv('yamato'));$('sagawaExport').addEventListener('click',()=>exportCsv('sagawa'));
+</script>
+</body>
+</html>

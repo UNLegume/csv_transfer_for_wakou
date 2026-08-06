@@ -118,6 +118,8 @@ def config() -> AppConfig:
             },
             "sagawa": {"billing_code": "000123456789"},
             "yamato": {"requester_code": "000987654321"},
+            "auth_username": "operator",
+            "auth_password": "test-secret",
         }
     )
 
@@ -188,6 +190,33 @@ def test_sagawa_uses_shipping_address_when_billing_address_is_missing() -> None:
     assert row["受注者電話番号"] == row["お届け先電話"]
 
 
+def test_sagawa_contract_values_are_configurable() -> None:
+    base = config()
+    custom = base.model_copy(
+        update={
+            "sagawa": base.sagawa.model_copy(
+                update={
+                    "service_type": "2",
+                    "postal_type": "9",
+                    "payment_type": "0",
+                    "cod_type": "",
+                    "option1": "",
+                    "include_delivery_date": False,
+                }
+            )
+        }
+    )
+    rows = decoded_rows(export_sagawa_csv([order()], custom))
+    row = dict(zip(rows[0], rows[1], strict=True))
+
+    assert row["便種"] == "2"
+    assert row["郵便種別"] == "9"
+    assert row["元／着払い種別"] == "0"
+    assert row["代引き種別"] == ""
+    assert row["option1"] == ""
+    assert row["shitei_bi_c"] == ""
+
+
 def test_yamato_matches_sample_headers_and_maps_neko_pos_fields() -> None:
     payload = export_yamato_csv([order(), order("#0000456")], config())
     rows = decoded_rows(payload)
@@ -208,6 +237,33 @@ def test_yamato_matches_sample_headers_and_maps_neko_pos_fields() -> None:
     assert row["依頼主コード"] == "000987654321"
     assert row["C：品名 購入品"] == "ネットショップ購入品"
     assert (row["コレクト代金引換額（税込）"], row["コレクト内消費税額"]) == ("0", "0")
+
+
+def test_yamato_contract_values_are_configurable() -> None:
+    base = config()
+    custom = base.model_copy(
+        update={
+            "yamato": base.yamato.model_copy(
+                update={
+                    "label_type": "B",
+                    "item_name": "雑貨",
+                    "collect_amount": "1000",
+                    "collect_tax": "90",
+                    "billing_classification_code": "ABC",
+                    "freight_management_number": "0001",
+                }
+            )
+        }
+    )
+    rows = decoded_rows(export_yamato_csv([order()], custom))
+    row = dict(zip(rows[0], rows[1], strict=True))
+
+    assert row["送り状種別"] == "B"
+    assert row["C：品名 購入品"] == "雑貨"
+    assert row["コレクト代金引換額（税込）"] == "1000"
+    assert row["コレクト内消費税額"] == "90"
+    assert row["請求先分類コード"] == "ABC"
+    assert row["運賃管理番号"] == "0001"
 
 
 def test_exports_are_cp932_round_trippable_and_quote_csv_metacharacters() -> None:

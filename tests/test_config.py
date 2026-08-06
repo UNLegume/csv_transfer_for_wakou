@@ -15,6 +15,8 @@ def valid_values() -> dict[str, object]:
         ),
         "sagawa": SagawaConfig(billing_code="0012345678"),
         "yamato": {"requester_code": "1234567890"},
+        "auth_username": "operator",
+        "auth_password": "test-secret",
     }
 
 

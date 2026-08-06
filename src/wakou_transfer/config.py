@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -20,10 +20,29 @@ class SenderConfig(ConfigModel):
 
 class SagawaConfig(ConfigModel):
     billing_code: str = Field(min_length=1)
+    amount: str = "0"
+    amount_unit: str = "0円"
+    include_delivery_date: bool = True
+    service_type: str = "1"
+    option1: str = "必着"
+    option2: str = "ご不在の際は不在票を入れて下さい"
+    option3: str = "送り主："
+    option4: str = "配達指定"
+    option5: str = "【"
+    option6: str = "】"
+    postal_type: str = "0"
+    payment_type: str = "1"
+    cod_type: str = "Yes"
 
 
 class YamatoConfig(ConfigModel):
     requester_code: str = Field(min_length=1)
+    label_type: str = "A"
+    item_name: str = "ネットショップ購入品"
+    collect_amount: str = "0"
+    collect_tax: str = "0"
+    billing_classification_code: str = ""
+    freight_management_number: str = ""
 
 
 class CarrierFieldLimits(ConfigModel):
@@ -49,6 +68,8 @@ class AppConfig(BaseSettings):
     sender: SenderConfig
     sagawa: SagawaConfig
     yamato: YamatoConfig
+    auth_username: str = Field(min_length=1)
+    auth_password: SecretStr
     limits: FieldLimits = Field(default_factory=FieldLimits)
     yamato_quantity_limit: int | None = Field(default=None, gt=0)
 

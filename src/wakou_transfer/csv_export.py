@@ -126,16 +126,19 @@ def _sagawa_row(order: ShippingOrder, config: AppConfig) -> list[str]:
     shipping_day = f"{order.shipping_date.month}月{order.shipping_date.day}日"
     shipping_compact = order.shipping_date.strftime("%Y%m%d")
     sender = config.sender
+    sagawa = config.sagawa
+    delivery_day = shipping_day if sagawa.include_delivery_date else ""
+    delivery_compact = shipping_compact if sagawa.include_delivery_date else ""
     return [
         _order_number(order),
         "",
-        "0",
-        "0円",
-        shipping_day,
-        shipping_day,
-        shipping_compact,
+        sagawa.amount,
+        sagawa.amount_unit,
+        delivery_day,
+        delivery_day,
+        delivery_compact,
         "",
-        "1",
+        sagawa.service_type,
         "",
         "",
         "",
@@ -151,12 +154,12 @@ def _sagawa_row(order: ShippingOrder, config: AppConfig) -> list[str]:
         normalize_postal_code(shipping.postal_code),
         _joined_address(shipping),
         normalize_phone(shipping.phone),
-        "必着",
-        "ご不在の際は不在票を入れて下さい",
-        "送り主：",
-        "配達指定",
-        "【",
-        "】",
+        sagawa.option1,
+        sagawa.option2,
+        sagawa.option3,
+        sagawa.option4,
+        sagawa.option5,
+        sagawa.option6,
         sender.company_name,
         _hyphenated_postal_code(sender.postal_code),
         sender.address,
@@ -166,9 +169,9 @@ def _sagawa_row(order: ShippingOrder, config: AppConfig) -> list[str]:
         sender.address,
         sender.requester_name,
         "",
-        "0",
-        "1",
-        "Yes",
+        sagawa.postal_type,
+        sagawa.payment_type,
+        sagawa.cod_type,
         "",
         "",
         "",
@@ -183,10 +186,11 @@ def _sagawa_row(order: ShippingOrder, config: AppConfig) -> list[str]:
 def _yamato_row(order: ShippingOrder, config: AppConfig) -> list[str]:
     shipping = order.shipping_address
     sender = config.sender
+    yamato = config.yamato
     shipping_date = order.shipping_date
     return [
         _order_number(order),
-        "A",
+        yamato.label_type,
         "",
         "",
         f"{shipping_date.year}/{shipping_date.month}/{shipping_date.day}",
@@ -203,7 +207,7 @@ def _yamato_row(order: ShippingOrder, config: AppConfig) -> list[str]:
         shipping.name,
         "",
         "",
-        config.yamato.requester_code,
+        yamato.requester_code,
         sender.phone,
         "",
         sender.postal_code,
@@ -212,20 +216,20 @@ def _yamato_row(order: ShippingOrder, config: AppConfig) -> list[str]:
         sender.requester_name,
         "",
         "",
-        "ネットショップ購入品",
+        yamato.item_name,
         "",
         "",
         "",
         "",
         "",
-        "0",
-        "0",
+        yamato.collect_amount,
+        yamato.collect_tax,
         "",
         "",
         "",
         "",
-        "",
-        "",
+        yamato.billing_classification_code,
+        yamato.freight_management_number,
         "",
     ]
 
