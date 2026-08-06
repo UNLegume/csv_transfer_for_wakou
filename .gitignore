@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+dist/
+
+# Secrets and local state
+.env
+.env.*
+!.env.example
+*.sqlite3
+exports/
+*.csv
+*.xlsx
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
