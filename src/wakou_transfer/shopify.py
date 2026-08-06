@@ -9,6 +9,7 @@ from decimal import Decimal
 from typing import Any, Final
 
 import httpx
+from dotenv import load_dotenv
 
 from .domain import Address, Carrier, LineItem, Money, ShippingOrder
 
@@ -192,6 +193,7 @@ class ShopifyClient:
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> "ShopifyClient":
         """Create a client from the documented Shopify environment variables."""
+        load_dotenv()
         try:
             domain = os.environ["SHOPIFY_STORE_DOMAIN"]
         except KeyError as exc:

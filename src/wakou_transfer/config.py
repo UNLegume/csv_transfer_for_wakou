@@ -62,6 +62,8 @@ class AppConfig(BaseSettings):
         str_strip_whitespace=True,
         env_prefix="WAKOU_",
         env_nested_delimiter="__",
+        env_file=".env",
+        env_file_encoding="utf-8",
         extra="ignore",
     )
 

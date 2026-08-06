@@ -39,7 +39,8 @@ uv sync --extra dev
 cp .env.example .env
 ```
 
-`.env` にShopify接続情報、発送元、ワコウ指定の固定値を設定します。`.env` はGit管理されません。
+`.env` にShopify接続情報、発送元、ワコウ指定の固定値を設定します。アプリは起動時に
+`.env`を自動読込みします。`.env` はGit管理されません。
 
 操作画面とCSV出力APIはHTTP Basic認証で保護されます。`WAKOU_AUTH_USERNAME`と`WAKOU_AUTH_PASSWORD`には推測されにくい値を設定してください。
 
