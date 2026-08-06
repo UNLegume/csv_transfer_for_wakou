@@ -14,9 +14,9 @@ from dotenv import load_dotenv
 from .domain import Address, Carrier, LineItem, Money, ShippingOrder
 
 DEFAULT_API_VERSION: Final = "2026-07"
-METAFIELD_NAMESPACE: Final = "wakou"
+METAFIELD_NAMESPACE: Final = "delivery"
 CARRIER_METAFIELD_KEY: Final = "carrier"
-MAX_QUANTITY_METAFIELD_KEY: Final = "max_quantity"
+MAX_QUANTITY_METAFIELD_KEY: Final = "yamato_max_quantity"
 
 _STATUS_PATTERN = re.compile(r"^[a-z_]+$")
 

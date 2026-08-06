@@ -218,6 +218,9 @@ async def test_fetch_orders_converts_shopify_data_and_uses_configured_version() 
         "https://example.myshopify.com/admin/api/2026-07/graphql.json"
     )
     assert responses.requests[0].headers["X-Shopify-Access-Token"] == "secret"
+    query = json.loads(responses.requests[0].content)["query"]
+    assert 'namespace: "delivery", key: "carrier"' in query
+    assert 'namespace: "delivery", key: "yamato_max_quantity"' in query
     variables = json.loads(responses.requests[0].content)["variables"]
     assert variables["query"] == (
         "created_at:>=2026-08-01 created_at:<=2026-08-02 financial_status:paid "
