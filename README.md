@@ -45,9 +45,12 @@ cp .env.example .env
 
 ```env
 SHOPIFY_STORE_DOMAIN=your-store.myshopify.com
-SHOPIFY_ADMIN_ACCESS_TOKEN=shpat_...
+SHOPIFY_CLIENT_ID=...
+SHOPIFY_CLIENT_SECRET=...
 SHOPIFY_API_VERSION=2026-07
 ```
+
+2026年以降に新規作成する自社ストア向けアプリはShopify Dev Dashboardで作成し、Client Credentials Grantを使用します。アプリはClient ID／Secretから24時間有効なアクセストークンを注文取得時に自動発行するため、短期トークンを手作業で更新する必要はありません。
 
 その他の設定項目は `.env.example` を参照してください。
 

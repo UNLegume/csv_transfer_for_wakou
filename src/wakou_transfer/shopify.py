@@ -157,8 +157,10 @@ class ShopifyClient:
     def __init__(
         self,
         store_domain: str,
-        access_token: str,
+        access_token: str | None,
         *,
+        client_id: str | None = None,
+        client_secret: str | None = None,
         api_version: str = DEFAULT_API_VERSION,
         transport: httpx.AsyncBaseTransport | None = None,
         timeout: float = 30.0,
@@ -166,12 +168,19 @@ class ShopifyClient:
         domain = store_domain.strip().removeprefix("https://").rstrip("/")
         if not domain or "/" in domain:
             raise ValueError("store_domain must be a Shopify host name")
-        if not access_token.strip():
-            raise ValueError("access_token must not be empty")
+        token = access_token.strip() if access_token else None
+        credentials = bool(
+            client_id and client_id.strip() and client_secret and client_secret.strip()
+        )
+        if not token and not credentials:
+            raise ValueError("access_token or client credentials are required")
         if not re.fullmatch(r"\d{4}-\d{2}", api_version):
             raise ValueError("api_version must use YYYY-MM format")
         self._url = f"https://{domain}/admin/api/{api_version}/graphql.json"
-        self._access_token = access_token
+        self._token_url = f"https://{domain}/admin/oauth/access_token"
+        self._access_token = token
+        self._client_id = client_id.strip() if client_id else None
+        self._client_secret = client_secret.strip() if client_secret else None
         self._transport = transport
         self._timeout = timeout
 
@@ -185,13 +194,27 @@ class ShopifyClient:
         """Create a client from the documented Shopify environment variables."""
         try:
             domain = os.environ["SHOPIFY_STORE_DOMAIN"]
-            token = os.environ["SHOPIFY_ADMIN_ACCESS_TOKEN"]
         except KeyError as exc:
             raise ValueError(f"Missing environment variable: {exc.args[0]}") from exc
+        token = os.getenv("SHOPIFY_ADMIN_ACCESS_TOKEN")
+        client_id = os.getenv("SHOPIFY_CLIENT_ID")
+        client_secret = os.getenv("SHOPIFY_CLIENT_SECRET")
+        if not token and not (client_id and client_secret):
+            raise ValueError(
+                "Missing Shopify credentials: set SHOPIFY_CLIENT_ID and "
+                "SHOPIFY_CLIENT_SECRET"
+            )
         version = api_version or os.getenv("SHOPIFY_API_VERSION", DEFAULT_API_VERSION)
         if version is None:  # pragma: no cover - os.getenv default makes this defensive only
             version = DEFAULT_API_VERSION
-        return cls(domain, token, api_version=version, transport=transport)
+        return cls(
+            domain,
+            token,
+            client_id=client_id,
+            client_secret=client_secret,
+            api_version=version,
+            transport=transport,
+        )
 
     async def fetch_orders(
         self,
@@ -210,8 +233,9 @@ class ShopifyClient:
             fulfillment_status=fulfillment_status,
             include_cancelled=include_cancelled,
         )
+        access_token = await self._get_access_token()
         headers = {
-            "X-Shopify-Access-Token": self._access_token,
+            "X-Shopify-Access-Token": access_token,
             "Content-Type": "application/json",
         }
         orders: list[ShippingOrder] = []
@@ -258,6 +282,34 @@ class ShopifyClient:
                 if cursor is None:
                     raise ShopifyGraphQLError("orders page has no endCursor")
         return tuple(orders)
+
+    async def _get_access_token(self) -> str:
+        if self._access_token:
+            return self._access_token
+        if not self._client_id or not self._client_secret:  # pragma: no cover - constructor guard
+            raise ShopifyHTTPError("Shopify client credentials are not configured")
+        try:
+            async with httpx.AsyncClient(
+                transport=self._transport, timeout=self._timeout
+            ) as http:
+                response = await http.post(
+                    self._token_url,
+                    data={
+                        "grant_type": "client_credentials",
+                        "client_id": self._client_id,
+                        "client_secret": self._client_secret,
+                    },
+                )
+        except httpx.HTTPError as exc:
+            raise ShopifyHTTPError("Shopify token request failed") from exc
+        if not response.is_success:
+            raise ShopifyHTTPError(f"Shopify token HTTP {response.status_code}")
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            raise ShopifyHTTPError("Shopify token response was invalid") from exc
+        root = _mapping(payload, "token response")
+        return _string(root.get("access_token"), "token response.access_token")
 
     async def _execute(
         self, http: httpx.AsyncClient, query: str, variables: Mapping[str, object]

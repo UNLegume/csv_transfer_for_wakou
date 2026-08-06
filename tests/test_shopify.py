@@ -92,6 +92,51 @@ class Responses:
         return httpx.Response(status, json=payload, request=request)
 
 
+@pytest.mark.asyncio
+async def test_from_env_uses_client_credentials_grant(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("SHOPIFY_STORE_DOMAIN", "example.myshopify.com")
+    monkeypatch.setenv("SHOPIFY_CLIENT_ID", "client-id")
+    monkeypatch.setenv("SHOPIFY_CLIENT_SECRET", "client-secret")
+    monkeypatch.delenv("SHOPIFY_ADMIN_ACCESS_TOKEN", raising=False)
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        if request.url.path == "/admin/oauth/access_token":
+            assert b"grant_type=client_credentials" in request.content
+            return httpx.Response(
+                200,
+                json={"access_token": "temporary-token", "expires_in": 86399},
+                request=request,
+            )
+        assert request.headers["X-Shopify-Access-Token"] == "temporary-token"
+        return httpx.Response(
+            200,
+            json={
+                "data": {
+                    "orders": {
+                        "nodes": [],
+                        "pageInfo": {"hasNextPage": False, "endCursor": None},
+                    }
+                }
+            },
+            request=request,
+        )
+
+    client = ShopifyClient.from_env(transport=httpx.MockTransport(handler))
+    orders = await client.fetch_orders(
+        date(2026, 8, 1), date(2026, 8, 2), shipping_date=date(2026, 8, 3)
+    )
+
+    assert orders == ()
+    assert [request.url.path for request in requests] == [
+        "/admin/oauth/access_token",
+        f"/admin/api/{DEFAULT_API_VERSION}/graphql.json",
+    ]
+
+
 def test_build_order_search_query_includes_dates_and_statuses() -> None:
     assert build_order_search_query(
         date(2026, 8, 1),
