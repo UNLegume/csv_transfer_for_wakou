@@ -53,6 +53,16 @@ def test_manual_override_requires_and_preserves_reason() -> None:
         automatic.override(Carrier.SAGAWA, " ")
 
 
+def test_manual_assignment_from_needs_review_does_not_require_reason() -> None:
+    unresolved = route_order([item(None)], yamato_quantity_limit=2)
+
+    assigned = unresolved.override(Carrier.YAMATO, "")
+
+    assert assigned.carrier is Carrier.YAMATO
+    assert assigned.reason_code is ReasonCode.MANUAL_ASSIGNMENT
+    assert assigned.override_reason is None
+
+
 def test_line_specific_yamato_quantity_limit_is_enforced() -> None:
     limited = LineItem(
         sku="SMALL",

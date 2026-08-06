@@ -333,7 +333,11 @@ async def test_duplicate_export_requires_reexport_reason(tmp_path: Path) -> None
 
 
 @pytest.mark.asyncio
-async def test_unconfigured_product_can_be_manually_routed_with_reason(tmp_path: Path) -> None:
+@pytest.mark.parametrize("carrier", (Carrier.YAMATO, Carrier.SAGAWA))
+async def test_unconfigured_product_can_be_manually_routed_without_reason(
+    tmp_path: Path,
+    carrier: Carrier,
+) -> None:
     fake = FakeShopifyClient((order(None),))
     history = ExportHistory(tmp_path / "history.sqlite3")
     async with client_for(create_app(config(), fake, history)) as client:
@@ -347,24 +351,43 @@ async def test_unconfigured_product_can_be_manually_routed_with_reason(tmp_path:
                 },
             )
         ).json()
-        blocked = await client.post(
-            "/api/export/yamato",
+        allowed = await client.post(
+            f"/api/export/{carrier.value}",
             json={
                 "preview_id": preview["preview_id"],
                 "order_ids": ["gid://shopify/Order/1"],
-                "overrides": {"gid://shopify/Order/1": "yamato"},
+                "overrides": {"gid://shopify/Order/1": carrier.value},
             },
         )
-        allowed = await client.post(
-            "/api/export/yamato",
+
+    assert allowed.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_changing_an_automatically_assigned_carrier_still_requires_reason(
+    tmp_path: Path,
+) -> None:
+    fake = FakeShopifyClient((order(Carrier.YAMATO),))
+    history = ExportHistory(tmp_path / "history.sqlite3")
+    async with client_for(create_app(config(), fake, history)) as client:
+        preview = (
+            await client.post(
+                "/api/preview",
+                json={
+                    "start_date": "2026-08-01",
+                    "end_date": "2026-08-02",
+                    "shipping_date": "2026-08-04",
+                },
+            )
+        ).json()
+        blocked = await client.post(
+            "/api/export/sagawa",
             json={
                 "preview_id": preview["preview_id"],
                 "order_ids": ["gid://shopify/Order/1"],
-                "overrides": {"gid://shopify/Order/1": "yamato"},
-                "override_reasons": {"gid://shopify/Order/1": "商品設定を確認済み"},
+                "overrides": {"gid://shopify/Order/1": "sagawa"},
             },
         )
 
     assert blocked.status_code == 422
     assert "理由" in blocked.json()["detail"]
-    assert allowed.status_code == 200

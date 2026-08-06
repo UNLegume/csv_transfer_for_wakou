@@ -13,6 +13,7 @@ class ReasonCode(StrEnum):
     UNCONFIGURED_ITEM = "unconfigured_item"
     INVALID_ITEM = "invalid_item"
     YAMATO_QUANTITY_EXCEEDED = "yamato_quantity_exceeded"
+    MANUAL_ASSIGNMENT = "manual_assignment"
     MANUAL_OVERRIDE = "manual_override"
 
 
@@ -24,11 +25,19 @@ class RoutingDecision:
     override_reason: str | None = None
 
     def override(self, carrier: Carrier, reason: str) -> "RoutingDecision":
-        reason = reason.strip()
-        if not reason:
-            raise ValueError("手動変更には理由が必要です")
         if carrier is Carrier.NEEDS_REVIEW:
             raise ValueError("手動変更先はヤマトまたは佐川を指定してください")
+        if carrier is self.carrier:
+            return self
+        reason = reason.strip()
+        if self.carrier is Carrier.NEEDS_REVIEW:
+            return RoutingDecision(
+                carrier=carrier,
+                reason_code=ReasonCode.MANUAL_ASSIGNMENT,
+                explanation="手動指定",
+            )
+        if not reason:
+            raise ValueError("手動変更には理由が必要です")
         return RoutingDecision(
             carrier=carrier,
             reason_code=ReasonCode.MANUAL_OVERRIDE,

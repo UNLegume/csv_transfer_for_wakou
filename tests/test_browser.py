@@ -239,6 +239,31 @@ def test_export_buttons_are_locked_while_request_is_in_flight(tmp_path: Path) ->
         browser.close()
 
 
+def test_unassigned_order_can_be_selected_without_change_reason(tmp_path: Path) -> None:
+    with running_app(tmp_path) as base_url, sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        context = browser.new_context(
+            accept_downloads=True,
+            http_credentials={"username": "operator", "password": "test-secret"},
+        )
+        page = context.new_page()
+        page.goto(base_url)
+        fetch_orders(page)
+
+        row = page.locator("#ordersBody tr").filter(has_text="#BROWSER003")
+        row.locator("label").filter(has_text="ヤマト").click()
+        row.locator('input[type="checkbox"]').check()
+        expect(page.locator("#overrideReason")).to_have_value("")
+
+        with page.expect_download():
+            page.locator("#yamatoExport").click()
+        expect(page.locator("#notice")).to_contain_text(
+            "ヤマトCSV（1件）を生成し、出力済み一覧へ移動しました。"
+        )
+        context.close()
+        browser.close()
+
+
 def test_history_search_reaches_an_export_older_than_first_page(tmp_path: Path) -> None:
     with running_app(tmp_path, seed_long_history=True) as base_url, sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)

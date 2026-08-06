@@ -372,15 +372,19 @@
     const overrides={};
     const override_reasons={};
     const generalReason=$('overrideReason').value.trim();
+    let reasonRequired=false;
     ids.forEach(id=>{
       const order=state.orders.find(candidate=>candidate.order_id===id);
       const selected=state.destinations.get(id);
       if(selected!==order.suggested_carrier){
         overrides[id]=selected;
-        override_reasons[id]=generalReason;
+        if(order.suggested_carrier!=='needs_review'){
+          reasonRequired=true;
+          override_reasons[id]=generalReason;
+        }
       }
     });
-    if(Object.keys(overrides).length&&!generalReason){
+    if(reasonRequired&&!generalReason){
       notice('配送会社を変更した理由を入力してください。',true);
       return;
     }
