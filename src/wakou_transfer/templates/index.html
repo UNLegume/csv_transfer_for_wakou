@@ -14,9 +14,10 @@
     .form-grid{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr)) auto;gap:14px;align-items:end}label{display:grid;gap:7px;font-size:13px;font-weight:600}input,select{height:42px;border:1px solid #cbd5e1;border-radius:10px;padding:0 12px;font:inherit;background:#fff;color:var(--ink)}input:focus,select:focus{outline:3px solid rgba(27,97,201,.14);border-color:var(--blue)}
     button{height:42px;border:0;border-radius:11px;padding:0 18px;font-weight:650;cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}.primary{background:var(--blue);color:#fff}.secondary{background:#eef4ff;color:#174ea6}.dark{background:#181d26;color:#fff}
     .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}.metric{background:#fff;border:1px solid var(--line);border-radius:16px;padding:17px}.metric span{font-size:12px;color:var(--muted)}.metric strong{display:block;font-size:26px;margin-top:5px}
-    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}.toolbar h2{font-size:18px;margin:0}.actions{display:flex;gap:10px;align-items:center}.reexport{width:230px}
+    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}.toolbar h2{font-size:18px;margin:0}.actions{display:flex;gap:10px;align-items:center}.actions input{width:260px}.reexport{width:230px}
     .export-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px;margin:0 0 14px;background:#f8fafc;border:1px solid var(--line);border-radius:14px}.selection-tools,.export-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.mini{height:36px;padding:0 12px;background:#fff;border:1px solid #cbd5e1;color:#334155}.selection-summary{font-size:13px;color:var(--muted);margin-left:4px}.export-actions button{min-width:170px}.count-pill{display:inline-grid;place-items:center;min-width:24px;height:24px;margin-left:8px;padding:0 7px;border-radius:999px;background:rgba(255,255,255,.22);font-size:12px}.secondary .count-pill{background:#dce8ff;color:#174ea6}
     .carrier-choice{display:inline-flex;padding:3px;background:#eef1f5;border-radius:10px;gap:3px}.carrier-choice label{display:block;cursor:pointer}.carrier-choice input{position:absolute;opacity:0;pointer-events:none}.carrier-choice span{display:block;padding:7px 11px;border-radius:8px;color:#64748b;font-size:12px;font-weight:700}.carrier-choice input:checked+span{background:#fff;color:#174ea6;box-shadow:0 1px 3px rgba(15,23,42,.15)}
+    .tabs{display:flex;gap:6px;margin:0 0 14px;padding:4px;background:#e9eef5;border-radius:13px;width:max-content}.tab-button{height:38px;background:transparent;color:#526071}.tab-button[aria-selected="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(15,23,42,.12)}.tab-panel[hidden]{display:none}.history-actions{display:flex;align-items:center;gap:12px}.history-count{font-size:13px;color:var(--muted)}
     .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:1060px}th{font-size:12px;text-align:left;color:#475569;background:var(--surface);padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap}td{padding:12px;border-bottom:1px solid #edf0f4;font-size:13px;vertical-align:top}tr:last-child td{border-bottom:0}.order-no{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700}.items{max-width:300px;color:#475569}.badge{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:700}.ok{background:#ecfdf3;color:var(--success)}.warn{background:#fff7ed;color:var(--warning)}.error{background:#fef3f2;color:var(--danger)}.muted{color:var(--muted)}
     .notice{display:none;padding:13px 15px;border-radius:12px;margin-bottom:16px;font-size:13px}.notice.show{display:block}.notice.info{background:#eef4ff;color:#174ea6}.notice.bad{background:#fef3f2;color:var(--danger)}
     .empty{text-align:center;padding:48px;color:var(--muted)}.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:8px}@keyframes spin{to{transform:rotate(360deg)}}
@@ -42,9 +43,10 @@
     <div class="metric"><span>佐川候補</span><strong id="sagawaCount">0</strong></div>
     <div class="metric"><span>要確認・エラー</span><strong id="reviewCount">0</strong></div>
   </section>
-  <section class="panel">
-    <div class="toolbar"><div><h2>注文一覧</h2><div class="muted" style="font-size:12px;margin-top:4px">行を選択し、必要なら出力先をヤマト／佐川へ切り替えてください。</div></div>
-      <div class="actions"><input id="overrideReason" placeholder="配送会社の変更理由"><input id="reexportReason" class="reexport" placeholder="再出力する場合の理由"></div>
+  <nav class="tabs" aria-label="注文表示"><button id="pendingTab" class="tab-button" aria-selected="true">未出力の注文</button><button id="historyTab" class="tab-button" aria-selected="false">出力済み一覧</button></nav>
+  <section id="pendingPanel" class="panel tab-panel">
+    <div class="toolbar"><div><h2>未出力の注文</h2><div class="muted" style="font-size:12px;margin-top:4px">選択は一時的です。CSV出力が成功した注文だけが出力済み一覧へ移動します。</div></div>
+      <div class="actions"><input id="overrideReason" placeholder="配送会社を変更した場合の理由"></div>
     </div>
     <div class="export-bar">
       <div class="selection-tools"><button id="selectYamato" class="mini">ヤマト候補を選択</button><button id="selectSagawa" class="mini">佐川候補を選択</button><button id="clearSelection" class="mini">選択解除</button><span id="selectionSummary" class="selection-summary">0件選択</span></div>
@@ -52,31 +54,310 @@
     </div>
     <div class="table-wrap"><table><thead><tr><th><input id="selectAll" type="checkbox"></th><th>注文番号</th><th>配送先</th><th>商品</th><th>自動判定</th><th>出力先</th><th>検証状態</th></tr></thead><tbody id="ordersBody"><tr><td colspan="7" class="empty">条件を指定して注文を取得してください。</td></tr></tbody></table></div>
   </section>
+  <section id="historyPanel" class="panel tab-panel" hidden>
+    <div class="toolbar"><div><h2>出力済み一覧</h2><div class="muted" style="font-size:12px;margin-top:4px">CSVを生成した記録です。氏名・住所・電話番号は保存していません。</div></div><div class="history-actions"><span id="historyCount" class="history-count">0件</span><button id="historyRefresh" class="mini">更新</button></div></div>
+    <div class="table-wrap"><table><thead><tr><th>出力日時</th><th>注文番号</th><th>配送会社</th><th>再出力理由</th></tr></thead><tbody id="historyBody"><tr><td colspan="4" class="empty">出力履歴を読み込んでいます。</td></tr></tbody></table></div>
+  </section>
 </main>
 <script>
-  const state={previewId:null,orders:[]};
-  const $=id=>document.getElementById(id); const today=new Date(); const iso=d=>d.toISOString().slice(0,10);
-  $('startDate').value=iso(today);$('endDate').value=iso(today);const next=new Date(today);next.setDate(next.getDate()+1);$('shippingDate').value=iso(next);
-  function notice(message,bad=false){const el=$('notice');el.textContent=message;el.className=`notice show ${bad?'bad':'info'}`}
-  function setLoading(on){$('fetchButton').disabled=on;$('fetchButton').innerHTML=on?'<span class="spinner"></span>取得中':'Shopifyから注文取得'}
-  function badge(text,kind){const b=document.createElement('span');b.className=`badge ${kind}`;b.textContent=text;return b}
-  function render(){const body=$('ordersBody');body.replaceChildren();if(!state.orders.length){const tr=body.insertRow();const td=tr.insertCell();td.colSpan=7;td.className='empty';td.textContent='対象注文はありません。';}
-    state.orders.forEach(o=>{const tr=body.insertRow();const check=document.createElement('input');check.type='checkbox';check.className='order-check';check.dataset.id=o.order_id;check.disabled=o.errors.length>0;tr.insertCell().append(check);
-      const no=tr.insertCell();no.className='order-no';no.textContent=o.order_number;if(o.already_exported){no.append(document.createElement('br'),badge('出力済み','warn'))}
-      const dest=tr.insertCell();dest.textContent=`${o.recipient_name}\n〒${o.postal_code}\n${o.address}`;dest.style.whiteSpace='pre-line';const items=tr.insertCell();items.className='items';items.textContent=o.items.map(i=>`${i.name} × ${i.quantity}`).join('\n');items.style.whiteSpace='pre-line';
-      const auto=tr.insertCell();auto.append(badge(o.suggested_carrier==='yamato'?'ヤマト':o.suggested_carrier==='sagawa'?'佐川':'要確認',o.suggested_carrier==='needs_review'?'warn':'ok'));const choice=document.createElement('div');choice.className='carrier-choice';[['yamato','ヤマト'],['sagawa','佐川']].forEach(([v,t])=>{const label=document.createElement('label');const radio=document.createElement('input');radio.type='radio';radio.name=`carrier-${o.order_id}`;radio.value=v;radio.className='carrier-radio';radio.dataset.id=o.order_id;radio.checked=o.suggested_carrier===v;const text=document.createElement('span');text.textContent=t;label.append(radio,text);choice.append(label)});tr.insertCell().append(choice);
-      const status=tr.insertCell();if(o.errors.length){status.append(badge('エラー','error'),document.createElement('br'),document.createTextNode(o.errors.map(e=>e.reason).join('／')))}else if(o.suggested_carrier==='needs_review'){status.append(badge('要確認','warn'))}else{status.append(badge('出力可能','ok'))}
-    });$('summary').hidden=false;$('totalCount').textContent=state.orders.length;$('yamatoCount').textContent=state.orders.filter(o=>o.suggested_carrier==='yamato').length;$('sagawaCount').textContent=state.orders.filter(o=>o.suggested_carrier==='sagawa').length;$('reviewCount').textContent=state.orders.filter(o=>o.suggested_carrier==='needs_review'||o.errors.length).length;updateButtons()}
-  function checkedIds(){return [...document.querySelectorAll('.order-check:checked')].map(c=>c.dataset.id)}
-  function destinationFor(id){return document.querySelector(`.carrier-radio[data-id="${CSS.escape(id)}"]:checked`)?.value}
-  function selectedIdsForCarrier(carrier){return checkedIds().filter(id=>destinationFor(id)===carrier)}
-  function updateButtons(){const selected=checkedIds();const yamato=selectedIdsForCarrier('yamato').length;const sagawa=selectedIdsForCarrier('sagawa').length;const undecided=selected.length-yamato-sagawa;$('yamatoExport').disabled=yamato===0;$('sagawaExport').disabled=sagawa===0;$('yamatoSelected').textContent=yamato;$('sagawaSelected').textContent=sagawa;$('selectionSummary').textContent=`${selected.length}件選択（ヤマト ${yamato}・佐川 ${sagawa}${undecided?`・未指定 ${undecided}`:''}）`;const enabled=[...document.querySelectorAll('.order-check:not(:disabled)')];$('selectAll').checked=enabled.length>0&&enabled.every(c=>c.checked);$('selectAll').indeterminate=enabled.some(c=>c.checked)&&!$('selectAll').checked}
-  function selectCarrierCandidates(carrier){document.querySelectorAll('.order-check').forEach(c=>{c.checked=!c.disabled&&destinationFor(c.dataset.id)===carrier});updateButtons()}
-  $('searchForm').addEventListener('submit',async e=>{e.preventDefault();setLoading(true);try{const response=await fetch('/api/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({start_date:$('startDate').value,end_date:$('endDate').value,shipping_date:$('shippingDate').value})});const data=await response.json();if(!response.ok)throw new Error(data.detail||'注文取得に失敗しました');state.previewId=data.preview_id;state.orders=data.orders;render();notice(`${data.orders.length}件の注文を取得しました。内容を確認してください。`)}catch(err){notice(err.message,true)}finally{setLoading(false)}});
-  document.addEventListener('change',e=>{if(e.target.matches('.order-check,.carrier-radio'))updateButtons();if(e.target===$('selectAll')){document.querySelectorAll('.order-check:not(:disabled)').forEach(c=>c.checked=e.target.checked);updateButtons()}});
-  $('selectYamato').addEventListener('click',()=>selectCarrierCandidates('yamato'));$('selectSagawa').addEventListener('click',()=>selectCarrierCandidates('sagawa'));$('clearSelection').addEventListener('click',()=>{document.querySelectorAll('.order-check').forEach(c=>c.checked=false);updateButtons()});
-  async function exportCsv(carrier){const ids=selectedIdsForCarrier(carrier);if(!ids.length){notice(`${carrier==='yamato'?'ヤマト':'佐川'}に設定された注文を選択してください。`,true);return}const overrides={},override_reasons={};const generalReason=$('overrideReason').value.trim();ids.forEach(id=>{const order=state.orders.find(o=>o.order_id===id);const selected=destinationFor(id);if(selected!==order.suggested_carrier){overrides[id]=selected;override_reasons[id]=generalReason}});if(Object.keys(overrides).length&&!generalReason){notice('配送会社を変更した理由を入力してください。',true);return}try{const response=await fetch(`/api/export/${carrier}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({preview_id:state.previewId,order_ids:ids,overrides,override_reasons,reexport_reason:$('reexportReason').value.trim()||null})});if(!response.ok){const data=await response.json();throw new Error(data.detail||'CSV生成に失敗しました')}const blob=await response.blob();const disposition=decodeURIComponent(response.headers.get('content-disposition')||'');const match=disposition.match(/filename\*=UTF-8''(.+)$/);const filename=match?match[1]:`wakou_${carrier}.csv`;const objectUrl=URL.createObjectURL(blob);const a=document.createElement('a');a.href=objectUrl;a.download=filename;a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(objectUrl),1000);state.orders=state.orders.filter(o=>!ids.includes(o.order_id));render();notice(`${carrier==='yamato'?'ヤマト':'佐川'}CSV（${ids.length}件）を生成しました。`)}catch(err){notice(err.message,true)}}
-  $('yamatoExport').addEventListener('click',()=>exportCsv('yamato'));$('sagawaExport').addEventListener('click',()=>exportCsv('sagawa'));
+  const state={previewId:null,orders:[],selectedIds:new Set(),destinations:new Map(),history:[]};
+  const $=id=>document.getElementById(id);
+  const today=new Date();
+  const iso=d=>d.toISOString().slice(0,10);
+  $('startDate').value=iso(today);
+  $('endDate').value=iso(today);
+  const next=new Date(today);
+  next.setDate(next.getDate()+1);
+  $('shippingDate').value=iso(next);
+
+  function notice(message,bad=false){
+    const el=$('notice');
+    el.textContent=message;
+    el.className=`notice show ${bad?'bad':'info'}`;
+  }
+
+  function setLoading(on){
+    $('fetchButton').disabled=on;
+    $('fetchButton').innerHTML=on?'<span class="spinner"></span>取得中':'Shopifyから注文取得';
+  }
+
+  function badge(text,kind){
+    const element=document.createElement('span');
+    element.className=`badge ${kind}`;
+    element.textContent=text;
+    return element;
+  }
+
+  function selectedIdsForCarrier(carrier){
+    return [...state.selectedIds].filter(id=>state.destinations.get(id)===carrier);
+  }
+
+  function updateSelectionControls(){
+    const selected=state.selectedIds.size;
+    const yamato=selectedIdsForCarrier('yamato').length;
+    const sagawa=selectedIdsForCarrier('sagawa').length;
+    const undecided=selected-yamato-sagawa;
+    $('yamatoExport').disabled=yamato===0;
+    $('sagawaExport').disabled=sagawa===0;
+    $('yamatoSelected').textContent=yamato;
+    $('sagawaSelected').textContent=sagawa;
+    $('selectionSummary').textContent=`${selected}件選択（ヤマト ${yamato}・佐川 ${sagawa}${undecided?`・未指定 ${undecided}`:''}）`;
+    const selectable=state.orders.filter(order=>order.errors.length===0);
+    $('selectAll').checked=selectable.length>0&&selectable.every(order=>state.selectedIds.has(order.order_id));
+    $('selectAll').indeterminate=selectable.some(order=>state.selectedIds.has(order.order_id))&&!$('selectAll').checked;
+  }
+
+  function renderSummary(){
+    $('summary').hidden=false;
+    $('totalCount').textContent=state.orders.length;
+    $('yamatoCount').textContent=state.orders.filter(order=>order.suggested_carrier==='yamato').length;
+    $('sagawaCount').textContent=state.orders.filter(order=>order.suggested_carrier==='sagawa').length;
+    $('reviewCount').textContent=state.orders.filter(order=>order.suggested_carrier==='needs_review'||order.errors.length).length;
+  }
+
+  function renderOrders(){
+    const body=$('ordersBody');
+    body.replaceChildren();
+    if(!state.orders.length){
+      const row=body.insertRow();
+      const cell=row.insertCell();
+      cell.colSpan=7;
+      cell.className='empty';
+      cell.textContent=state.previewId?'未出力の注文はありません。':'条件を指定して注文を取得してください。';
+    }
+    state.orders.forEach(order=>{
+      const row=body.insertRow();
+      const check=document.createElement('input');
+      check.type='checkbox';
+      check.className='order-check';
+      check.dataset.id=order.order_id;
+      check.disabled=order.errors.length>0;
+      check.checked=state.selectedIds.has(order.order_id);
+      row.insertCell().append(check);
+
+      const number=row.insertCell();
+      number.className='order-no';
+      number.textContent=order.order_number;
+
+      const destination=row.insertCell();
+      destination.textContent=`${order.recipient_name}\n〒${order.postal_code}\n${order.address}`;
+      destination.style.whiteSpace='pre-line';
+
+      const items=row.insertCell();
+      items.className='items';
+      items.textContent=order.items.map(item=>`${item.name} × ${item.quantity}`).join('\n');
+      items.style.whiteSpace='pre-line';
+
+      const automatic=row.insertCell();
+      const automaticText=order.suggested_carrier==='yamato'?'ヤマト':order.suggested_carrier==='sagawa'?'佐川':'要確認';
+      automatic.append(badge(automaticText,order.suggested_carrier==='needs_review'?'warn':'ok'));
+
+      const choice=document.createElement('div');
+      choice.className='carrier-choice';
+      [['yamato','ヤマト'],['sagawa','佐川']].forEach(([value,text])=>{
+        const label=document.createElement('label');
+        const radio=document.createElement('input');
+        radio.type='radio';
+        radio.name=`carrier-${order.order_id}`;
+        radio.value=value;
+        radio.className='carrier-radio';
+        radio.dataset.id=order.order_id;
+        radio.checked=state.destinations.get(order.order_id)===value;
+        const caption=document.createElement('span');
+        caption.textContent=text;
+        label.append(radio,caption);
+        choice.append(label);
+      });
+      row.insertCell().append(choice);
+
+      const validation=row.insertCell();
+      if(order.errors.length){
+        validation.append(badge('エラー','error'),document.createElement('br'),document.createTextNode(order.errors.map(error=>error.reason).join('／')));
+      }else if(order.suggested_carrier==='needs_review'){
+        validation.append(badge('要確認','warn'));
+      }else{
+        validation.append(badge('出力可能','ok'));
+      }
+    });
+    renderSummary();
+    updateSelectionControls();
+  }
+
+  function resetPreview(data){
+    const exported=data.orders.filter(order=>order.already_exported).length;
+    state.previewId=data.preview_id;
+    state.orders=data.orders.filter(order=>!order.already_exported);
+    state.selectedIds.clear();
+    state.destinations.clear();
+    state.orders.forEach(order=>{
+      if(order.suggested_carrier==='yamato'||order.suggested_carrier==='sagawa'){
+        state.destinations.set(order.order_id,order.suggested_carrier);
+      }
+    });
+    renderOrders();
+    const suffix=exported?` 出力済み${exported}件は「出力済み一覧」で確認できます。`:'';
+    notice(`未出力の注文を${state.orders.length}件取得しました。${suffix}`);
+  }
+
+  function selectCarrierCandidates(carrier){
+    state.selectedIds.clear();
+    state.orders.forEach(order=>{
+      if(order.errors.length===0&&state.destinations.get(order.order_id)===carrier){
+        state.selectedIds.add(order.order_id);
+      }
+    });
+    renderOrders();
+  }
+
+  function activateTab(name){
+    const pending=name==='pending';
+    $('pendingPanel').hidden=!pending;
+    $('historyPanel').hidden=pending;
+    $('pendingTab').setAttribute('aria-selected',String(pending));
+    $('historyTab').setAttribute('aria-selected',String(!pending));
+    if(!pending)loadHistory();
+  }
+
+  function renderHistory(){
+    const body=$('historyBody');
+    body.replaceChildren();
+    $('historyCount').textContent=`${state.history.length}件`;
+    if(!state.history.length){
+      const row=body.insertRow();
+      const cell=row.insertCell();
+      cell.colSpan=4;
+      cell.className='empty';
+      cell.textContent='出力履歴はありません。';
+      return;
+    }
+    state.history.forEach(record=>{
+      const row=body.insertRow();
+      const exportedAt=row.insertCell();
+      exportedAt.textContent=new Intl.DateTimeFormat('ja-JP',{dateStyle:'medium',timeStyle:'short'}).format(new Date(record.exported_at));
+      const number=row.insertCell();
+      number.className='order-no';
+      number.textContent=record.order_number;
+      row.insertCell().append(badge(record.carrier==='yamato'?'ヤマト':'佐川',record.carrier==='yamato'?'ok':'warn'));
+      row.insertCell().textContent=record.reexport_reason||'—';
+    });
+  }
+
+  async function loadHistory(){
+    try{
+      const response=await fetch('/api/history');
+      const data=await response.json();
+      if(!response.ok)throw new Error(data.detail||'出力履歴を取得できませんでした');
+      state.history=data.records;
+      renderHistory();
+    }catch(error){
+      notice(error.message,true);
+    }
+  }
+
+  $('searchForm').addEventListener('submit',async event=>{
+    event.preventDefault();
+    setLoading(true);
+    try{
+      const response=await fetch('/api/preview',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({start_date:$('startDate').value,end_date:$('endDate').value,shipping_date:$('shippingDate').value}),
+      });
+      const data=await response.json();
+      if(!response.ok)throw new Error(data.detail||'注文取得に失敗しました');
+      resetPreview(data);
+    }catch(error){
+      notice(error.message,true);
+    }finally{
+      setLoading(false);
+    }
+  });
+
+  document.addEventListener('change',event=>{
+    if(event.target.matches('.order-check')){
+      const id=event.target.dataset.id;
+      if(event.target.checked)state.selectedIds.add(id);else state.selectedIds.delete(id);
+      updateSelectionControls();
+    }
+    if(event.target.matches('.carrier-radio')){
+      state.destinations.set(event.target.dataset.id,event.target.value);
+      updateSelectionControls();
+    }
+    if(event.target===$('selectAll')){
+      state.selectedIds.clear();
+      if(event.target.checked){
+        state.orders.filter(order=>order.errors.length===0).forEach(order=>state.selectedIds.add(order.order_id));
+      }
+      renderOrders();
+    }
+  });
+
+  $('selectYamato').addEventListener('click',()=>selectCarrierCandidates('yamato'));
+  $('selectSagawa').addEventListener('click',()=>selectCarrierCandidates('sagawa'));
+  $('clearSelection').addEventListener('click',()=>{state.selectedIds.clear();renderOrders()});
+  $('pendingTab').addEventListener('click',()=>activateTab('pending'));
+  $('historyTab').addEventListener('click',()=>activateTab('history'));
+  $('historyRefresh').addEventListener('click',loadHistory);
+
+  async function exportCsv(carrier){
+    const ids=selectedIdsForCarrier(carrier);
+    if(!ids.length){
+      notice(`${carrier==='yamato'?'ヤマト':'佐川'}に設定された注文を選択してください。`,true);
+      return;
+    }
+    const overrides={};
+    const override_reasons={};
+    const generalReason=$('overrideReason').value.trim();
+    ids.forEach(id=>{
+      const order=state.orders.find(candidate=>candidate.order_id===id);
+      const selected=state.destinations.get(id);
+      if(selected!==order.suggested_carrier){
+        overrides[id]=selected;
+        override_reasons[id]=generalReason;
+      }
+    });
+    if(Object.keys(overrides).length&&!generalReason){
+      notice('配送会社を変更した理由を入力してください。',true);
+      return;
+    }
+    try{
+      const response=await fetch(`/api/export/${carrier}`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({preview_id:state.previewId,order_ids:ids,overrides,override_reasons,reexport_reason:null}),
+      });
+      if(!response.ok){
+        const data=await response.json();
+        throw new Error(data.detail||'CSV生成に失敗しました');
+      }
+      const blob=await response.blob();
+      const disposition=decodeURIComponent(response.headers.get('content-disposition')||'');
+      const match=disposition.match(/filename\*=UTF-8''(.+)$/);
+      const filename=match?match[1]:`wakou_${carrier}.csv`;
+      const objectUrl=URL.createObjectURL(blob);
+      const link=document.createElement('a');
+      link.href=objectUrl;
+      link.download=filename;
+      link.style.display='none';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(()=>URL.revokeObjectURL(objectUrl),1000);
+      ids.forEach(id=>{
+        state.selectedIds.delete(id);
+        state.destinations.delete(id);
+      });
+      state.orders=state.orders.filter(order=>!ids.includes(order.order_id));
+      renderOrders();
+      await loadHistory();
+      notice(`${carrier==='yamato'?'ヤマト':'佐川'}CSV（${ids.length}件）を生成し、出力済み一覧へ移動しました。`);
+    }catch(error){
+      notice(error.message,true);
+    }
+  }
+
+  $('yamatoExport').addEventListener('click',()=>exportCsv('yamato'));
+  $('sagawaExport').addEventListener('click',()=>exportCsv('sagawa'));
 </script>
 </body>
 </html>

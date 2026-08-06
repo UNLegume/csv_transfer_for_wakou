@@ -109,9 +109,11 @@ async def test_operation_endpoints_require_authentication(tmp_path: Path) -> Non
                 "shipping_date": "2026-08-04",
             },
         )
+        history = await anonymous.get("/api/history")
 
     assert index.status_code == 401
     assert preview.status_code == 401
+    assert history.status_code == 401
 
 
 @pytest.mark.asyncio
@@ -129,10 +131,43 @@ async def test_index_serves_japanese_operation_screen(tmp_path: Path) -> None:
     assert "Shopifyから注文取得" in response.text
     assert "ヤマト候補を選択" in response.text
     assert "佐川候補を選択" in response.text
+    assert "未出力の注文" in response.text
+    assert "出力済み一覧" in response.text
+    assert "loadHistory" in response.text
+    assert "selectedIds:new Set()" in response.text
     assert "selectedIdsForCarrier" in response.text
     assert "carrier-radio" in response.text
-    assert "document.body.appendChild(a)" in response.text
+    assert "document.body.appendChild(link)" in response.text
     assert "setTimeout(()=>URL.revokeObjectURL(objectUrl),1000)" in response.text
+
+
+@pytest.mark.asyncio
+async def test_history_endpoint_lists_exports_without_personal_data(tmp_path: Path) -> None:
+    history = ExportHistory(tmp_path / "history.sqlite3")
+    history.record(
+        "batch-1",
+        "gid://shopify/Order/1",
+        "#1673",
+        Carrier.SAGAWA,
+    )
+    app = create_app(config(), FakeShopifyClient(tuple()), history)
+
+    async with client_for(app) as client:
+        response = await client.get("/api/history")
+
+    assert response.status_code == 200
+    assert response.json()["records"] == [
+        {
+            "batch_id": "batch-1",
+            "order_number": "#1673",
+            "carrier": "sagawa",
+            "exported_at": history.list_recent()[0].exported_at,
+            "reexport_reason": None,
+        }
+    ]
+    assert "山田" not in response.text
+    assert "北海道" not in response.text
+    assert "09012345678" not in response.text
 
 
 @pytest.mark.asyncio
@@ -181,6 +216,7 @@ async def test_export_returns_cp932_csv_and_records_history(tmp_path: Path) -> N
                 "order_ids": ["gid://shopify/Order/1"],
             },
         )
+        history_response = await client.get("/api/history")
 
     assert response.status_code == 200
     assert "送り状_ヤマト_20260804.csv" in unquote(
@@ -190,6 +226,9 @@ async def test_export_returns_cp932_csv_and_records_history(tmp_path: Path) -> N
     assert "お客様管理番号" in decoded
     assert "1673" in decoded
     assert history.exported_order_ids(["gid://shopify/Order/1"])
+    assert history_response.status_code == 200
+    assert history_response.json()["records"][0]["order_number"] == "#1673"
+    assert history_response.json()["records"][0]["carrier"] == "yamato"
 
 
 @pytest.mark.asyncio

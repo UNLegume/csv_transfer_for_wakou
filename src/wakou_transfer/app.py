@@ -185,6 +185,21 @@ def create_app(
     async def health() -> dict[str, str]:
         return {"status": "ok"}
 
+    @app.get("/api/history", dependencies=[Depends(require_auth)])
+    async def history_list() -> dict[str, object]:
+        return {
+            "records": [
+                {
+                    "batch_id": record.batch_id,
+                    "order_number": record.order_number,
+                    "carrier": record.carrier.value,
+                    "exported_at": record.exported_at,
+                    "reexport_reason": record.reexport_reason,
+                }
+                for record in export_history.list_recent()
+            ]
+        }
+
     @app.post("/api/preview", dependencies=[Depends(require_auth)])
     async def preview(request: PreviewRequest) -> dict[str, object]:
         if request.start_date > request.end_date:
