@@ -51,3 +51,18 @@ def test_manual_override_requires_and_preserves_reason() -> None:
     )
     with pytest.raises(ValueError, match="理由"):
         automatic.override(Carrier.SAGAWA, " ")
+
+
+def test_line_specific_yamato_quantity_limit_is_enforced() -> None:
+    limited = LineItem(
+        sku="SMALL",
+        name="小型商品",
+        quantity=3,
+        carrier=Carrier.YAMATO,
+        yamato_max_quantity=2,
+    )
+
+    decision = route_order([limited], yamato_quantity_limit=None)
+
+    assert decision.carrier is Carrier.SAGAWA
+    assert decision.reason_code is ReasonCode.YAMATO_QUANTITY_EXCEEDED

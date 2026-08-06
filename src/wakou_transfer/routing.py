@@ -54,6 +54,25 @@ def route_order(
             Carrier.SAGAWA, ReasonCode.SAGAWA_INCLUDED, "佐川指定の商品が含まれています"
         )
 
+    exceeded_line = next(
+        (
+            item
+            for item in items
+            if item.yamato_max_quantity is not None
+            and item.quantity > item.yamato_max_quantity
+        ),
+        None,
+    )
+    if exceeded_line is not None:
+        return RoutingDecision(
+            Carrier.SAGAWA,
+            ReasonCode.YAMATO_QUANTITY_EXCEEDED,
+            (
+                f"{exceeded_line.name}の数量{exceeded_line.quantity}が"
+                f"ヤマト上限{exceeded_line.yamato_max_quantity}を超えています"
+            ),
+        )
+
     quantity = sum(item.quantity for item in items)
     if yamato_quantity_limit is not None and quantity > yamato_quantity_limit:
         return RoutingDecision(

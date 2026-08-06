@@ -20,7 +20,9 @@ def address(name: str = "山田 太郎") -> dict[str, str]:
     return {
         "name": name,
         "zip": "001-0001",
-        "address1": "札幌市中央区1-1",
+        "province": "北海道",
+        "city": "札幌市中央区",
+        "address1": "北1条1-1",
         "address2": "ワコウビル",
         "phone": "090-0000-0000",
     }
@@ -154,14 +156,18 @@ async def test_fetch_orders_converts_shopify_data_and_uses_configured_version() 
         transport=httpx.MockTransport(responses),
     )
 
-    orders = await client.fetch_orders(date(2026, 8, 1), date(2026, 8, 2))
+    orders = await client.fetch_orders(
+        date(2026, 8, 1), date(2026, 8, 2), shipping_date=date(2026, 8, 4)
+    )
 
     assert len(orders) == 1
     order = orders[0]
     assert order.order_id == "gid://shopify/Order/1"
     assert order.order_number == "#0000123"
-    assert order.shipping_date == date(2026, 8, 2)
+    assert order.shipping_date == date(2026, 8, 4)
+    assert order.shipping_address.address1 == "北海道札幌市中央区北1条1-1"
     assert order.line_items[0].carrier is Carrier.SAGAWA
+    assert order.line_items[0].yamato_max_quantity == 2
     assert str(order.total.amount) == "1200.50"
     assert responses.requests[0].url == (
         "https://example.myshopify.com/admin/api/2026-07/graphql.json"
@@ -224,7 +230,9 @@ async def test_fetch_orders_paginates_orders_and_each_orders_line_items() -> Non
         "example.myshopify.com", "secret", transport=httpx.MockTransport(responses)
     )
 
-    orders = await client.fetch_orders(date(2026, 8, 1), date(2026, 8, 2))
+    orders = await client.fetch_orders(
+        date(2026, 8, 1), date(2026, 8, 2), shipping_date=date(2026, 8, 4)
+    )
 
     assert [len(order.line_items) for order in orders] == [2, 1]
     request_bodies = [json.loads(request.content) for request in responses.requests]
@@ -241,7 +249,9 @@ async def test_fetch_orders_reports_http_failures(status: int) -> None:
     )
 
     with pytest.raises(ShopifyHTTPError, match=str(status)):
-        await client.fetch_orders(date(2026, 8, 1), date(2026, 8, 2))
+        await client.fetch_orders(
+            date(2026, 8, 1), date(2026, 8, 2), shipping_date=date(2026, 8, 4)
+        )
 
 
 @pytest.mark.asyncio
@@ -260,7 +270,9 @@ async def test_fetch_orders_reports_graphql_and_user_errors(payload: dict[str, o
     )
 
     with pytest.raises(ShopifyGraphQLError):
-        await client.fetch_orders(date(2026, 8, 1), date(2026, 8, 2))
+        await client.fetch_orders(
+            date(2026, 8, 1), date(2026, 8, 2), shipping_date=date(2026, 8, 4)
+        )
 
 
 def test_default_api_version_is_explicit() -> None:

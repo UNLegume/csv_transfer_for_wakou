@@ -4,7 +4,7 @@ import os
 import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 from typing import Any, Final
 
@@ -132,8 +132,8 @@ query Orders($query: String!, $after: String) {{
   orders(first: 100, after: $after, query: $query, sortKey: CREATED_AT) {{
     nodes {{
       id name createdAt cancelledAt displayFinancialStatus displayFulfillmentStatus
-      shippingAddress {{ name zip address1 address2 phone }}
-      billingAddress {{ name zip address1 address2 phone }}
+      shippingAddress {{ name zip province city address1 address2 phone }}
+      billingAddress {{ name zip province city address1 address2 phone }}
       currentTotalPriceSet {{ shopMoney {{ amount currencyCode }} }}
       lineItems(first: 100) {{ {_LINE_ITEM_FIELDS} }}
     }}
@@ -198,6 +198,7 @@ class ShopifyClient:
         start_date: date,
         end_date: date,
         *,
+        shipping_date: date,
         financial_status: str = "paid",
         fulfillment_status: str | None = None,
         include_cancelled: bool = False,
@@ -249,7 +250,7 @@ class ShopifyClient:
                             next_connection.get("pageInfo"), "lineItems.pageInfo"
                         )
                         line_cursor = _cursor(page_info)
-                    orders.append(_to_shipping_order(order, raw_items))
+                    orders.append(_to_shipping_order(order, raw_items, shipping_date))
                 page_info = _mapping(connection.get("pageInfo"), "orders.pageInfo")
                 if not bool(page_info.get("hasNextPage")):
                     break
@@ -337,10 +338,13 @@ def _cursor(page_info: Mapping[str, Any]) -> str | None:
 
 def _to_address(value: object, path: str) -> Address:
     raw = _mapping(value, path)
+    address1 = "".join(
+        str(raw.get(part) or "") for part in ("province", "city", "address1")
+    )
     return Address(
         name=_string(raw.get("name"), f"{path}.name"),
         postal_code=_string(raw.get("zip"), f"{path}.zip"),
-        address1=_string(raw.get("address1"), f"{path}.address1"),
+        address1=address1,
         address2=str(raw.get("address2") or ""),
         phone=_string(raw.get("phone"), f"{path}.phone"),
     )
@@ -364,18 +368,19 @@ def _to_line_item(value: object) -> LineItem:
         name=_string(raw.get("name"), "lineItem.name"),
         quantity=_integer(raw.get("quantity"), "lineItem.quantity"),
         carrier=resolved.carrier,
+        yamato_max_quantity=resolved.max_quantity,
     )
 
 
-def _to_shipping_order(raw: Mapping[str, Any], raw_items: Sequence[object]) -> ShippingOrder:
+def _to_shipping_order(
+    raw: Mapping[str, Any], raw_items: Sequence[object], shipping_date: date
+) -> ShippingOrder:
     price_set = _mapping(raw.get("currentTotalPriceSet"), "order.currentTotalPriceSet")
     money = _mapping(price_set.get("shopMoney"), "order.currentTotalPriceSet.shopMoney")
-    created_at = _string(raw.get("createdAt"), "order.createdAt")
     try:
-        shipping_date = datetime.fromisoformat(created_at.replace("Z", "+00:00")).date()
         amount = Decimal(_string(money.get("amount"), "order.total.amount"))
     except (ValueError, ArithmeticError) as exc:
-        raise ShopifyGraphQLError("Invalid order date or total amount") from exc
+        raise ShopifyGraphQLError("Invalid order total amount") from exc
     billing = raw.get("billingAddress")
     return ShippingOrder(
         order_id=_string(raw.get("id"), "order.id"),

@@ -30,6 +30,7 @@ class LineItem(DomainModel):
     name: str
     quantity: int = Field(gt=0)
     carrier: Carrier | None = None
+    yamato_max_quantity: int | None = Field(default=None, gt=0)
 
 
 class Money(DomainModel):
