@@ -127,6 +127,8 @@ async def test_index_serves_japanese_operation_screen(tmp_path: Path) -> None:
     assert response.status_code == 200
     assert "ワコウ送り状CSV変換" in response.text
     assert "Shopifyから注文取得" in response.text
+    assert "document.body.appendChild(a)" in response.text
+    assert "setTimeout(()=>URL.revokeObjectURL(objectUrl),1000)" in response.text
 
 
 @pytest.mark.asyncio
