@@ -77,8 +77,12 @@ Shopifyの商品またはバリエーションに次のメタフィールドを�
 ## 起動
 
 ```bash
-uv run uvicorn wakou_transfer.app:create_app --factory --host 127.0.0.1 --port 8000
+uv run uvicorn wakou_transfer.app:create_app --factory --host 127.0.0.1 --port 8000 --workers 1
 ```
+
+プレビューはプロセス内メモリで管理するため、実運用でも必ず単一worker
+（`--workers 1`）で起動してください。複数workerでは、プレビューを作成したworkerと
+CSV出力を受けるworkerが異なり、注文を参照できない場合があります。
 
 ブラウザで `http://127.0.0.1:8000` を開きます。
 
@@ -88,7 +92,31 @@ uv run uvicorn wakou_transfer.app:create_app --factory --host 127.0.0.1 --port 8
 4. 出力する注文を選択
 5. ヤマトCSVまたは佐川CSVをダウンロード
 
-配送会社を変更した場合は変更理由が必要です。出力済み注文を再出力する場合も再出力理由が必要です。
+CSVの生成が完了し、出力履歴が追記された時点で、その注文は「出力済み」になります。
+ブラウザへのダウンロード保存や印刷の完了時点ではありません。出力済み注文を再出力するには、
+対象注文を含む注文期間をShopifyから再取得し、再出力理由を入力してください。
+配送会社を変更した場合も変更理由が必要です。
+出力履歴は100件ずつ表示し、注文番号検索または「さらに表示」で古い履歴も確認・再出力できます。
+
+## テスト
+
+初回だけPlaywrightのテスト用Chromiumをインストールします。
+
+```bash
+uv sync --extra dev
+uv run playwright install chromium
+```
+
+その後は、API・CSV・画面状態遷移をまとめて検証できます。
+
+```bash
+uv run pytest
+uv run ruff check .
+uv run mypy src tests
+```
+
+テストはShopify GraphQL、配送判定、宛先検証、CSV列契約、Web API、複数選択、
+出力後の状態保持、履歴からの再出力、二重送信防止を対象にしています。
 
 ## CSV仕様
 
@@ -108,17 +136,8 @@ uv run uvicorn wakou_transfer.app:create_app --factory --host 127.0.0.1 --port 8
 - APIは読取専用スコープだけを使用する
 - プレビュー中の注文情報はプロセス内メモリだけに保持する
 - SQLite履歴には氏名、住所、電話番号を保存しない
+- 履歴APIはプレビューとの対応付けに使う注文IDを含むが、氏名、住所、郵便番号、電話番号、商品明細を返さない
 - CSV自体には個人情報が含まれるため、安全な場所へ保存して不要になったら削除する
-
-## 開発
-
-```bash
-uv run pytest
-uv run ruff check .
-uv run mypy src tests
-```
-
-テストはShopify GraphQLのページネーション・エラー、配送判定、宛先検証、CSV列契約、CP932／CRLF、Web API、重複防止を対象にしています。
 
 ## 構成
 

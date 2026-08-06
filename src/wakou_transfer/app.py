@@ -9,7 +9,7 @@ from typing import Annotated, Protocol
 from urllib.parse import quote
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.responses import HTMLResponse, Response
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel, Field
@@ -186,18 +186,31 @@ def create_app(
         return {"status": "ok"}
 
     @app.get("/api/history", dependencies=[Depends(require_auth)])
-    async def history_list() -> dict[str, object]:
+    async def history_list(
+        limit: Annotated[int, Query(ge=1, le=200)] = 100,
+        offset: Annotated[int, Query(ge=0)] = 0,
+        order_number: str | None = None,
+    ) -> dict[str, object]:
+        records = export_history.list_recent(
+            limit=limit,
+            offset=offset,
+            order_number=order_number,
+        )
+        total = export_history.count(order_number=order_number)
         return {
             "records": [
                 {
                     "batch_id": record.batch_id,
+                    "order_id": record.order_id,
                     "order_number": record.order_number,
                     "carrier": record.carrier.value,
                     "exported_at": record.exported_at,
                     "reexport_reason": record.reexport_reason,
                 }
-                for record in export_history.list_recent()
-            ]
+                for record in records
+            ],
+            "total": total,
+            "has_more": offset + len(records) < total,
         }
 
     @app.post("/api/preview", dependencies=[Depends(require_auth)])
@@ -274,10 +287,7 @@ def create_app(
         try:
             export_history.record_batch(
                 batch_id,
-                [
-                    (order.order_id, order.order_number, carrier)
-                    for order in output_orders
-                ],
+                [(order.order_id, order.order_number, carrier) for order in output_orders],
                 reexport_reason=reexport_reason,
             )
         except ValueError as exc:

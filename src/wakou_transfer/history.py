@@ -1,4 +1,4 @@
-"""個人情報を保存しないCSV出力履歴。"""
+"""個人情報を保存せず、注文IDでプレビューと対応付けられるCSV出力履歴。"""
 
 import sqlite3
 from collections.abc import Sequence
@@ -112,12 +112,28 @@ class ExportHistory:
                 ],
             )
 
-    def list_recent(self, limit: int = 100) -> tuple[ExportRecord, ...]:
+    @staticmethod
+    def _order_number_pattern(order_number: str) -> str:
+        escaped = order_number.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        return f"%{escaped}%"
+
+    def list_recent(
+        self,
+        limit: int = 100,
+        offset: int = 0,
+        order_number: str | None = None,
+    ) -> tuple[ExportRecord, ...]:
+        search = order_number.strip() if order_number else None
+        where_clause = " WHERE order_number LIKE ? ESCAPE '\\'" if search else ""
+        parameters: tuple[object, ...] = (
+            (self._order_number_pattern(search), limit, offset) if search else (limit, offset)
+        )
         with self._connect() as connection:
             rows = connection.execute(
-                """SELECT batch_id, order_id, order_number, carrier, exported_at,
-                reexport_reason FROM exports ORDER BY id DESC LIMIT ?""",
-                (limit,),
+                f"""SELECT batch_id, order_id, order_number, carrier, exported_at,
+                reexport_reason FROM exports{where_clause}
+                ORDER BY id DESC LIMIT ? OFFSET ?""",  # noqa: S608
+                parameters,
             )
             return tuple(
                 ExportRecord(
@@ -132,3 +148,15 @@ class ExportHistory:
                 )
                 for row in rows
             )
+
+    def count(self, order_number: str | None = None) -> int:
+        search = order_number.strip() if order_number else None
+        with self._connect() as connection:
+            if search:
+                row = connection.execute(
+                    "SELECT COUNT(*) AS total FROM exports WHERE order_number LIKE ? ESCAPE '\\'",
+                    (self._order_number_pattern(search),),
+                ).fetchone()
+            else:
+                row = connection.execute("SELECT COUNT(*) AS total FROM exports").fetchone()
+        return int(row["total"])

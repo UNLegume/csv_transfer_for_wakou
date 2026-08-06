@@ -17,7 +17,7 @@
     .toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}.toolbar h2{font-size:18px;margin:0}.actions{display:flex;gap:10px;align-items:center}.actions input{width:260px}.reexport{width:230px}
     .export-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px;margin:0 0 14px;background:#f8fafc;border:1px solid var(--line);border-radius:14px}.selection-tools,.export-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.mini{height:36px;padding:0 12px;background:#fff;border:1px solid #cbd5e1;color:#334155}.selection-summary{font-size:13px;color:var(--muted);margin-left:4px}.export-actions button{min-width:170px}.count-pill{display:inline-grid;place-items:center;min-width:24px;height:24px;margin-left:8px;padding:0 7px;border-radius:999px;background:rgba(255,255,255,.22);font-size:12px}.secondary .count-pill{background:#dce8ff;color:#174ea6}
     .carrier-choice{display:inline-flex;padding:3px;background:#eef1f5;border-radius:10px;gap:3px}.carrier-choice label{display:block;cursor:pointer}.carrier-choice input{position:absolute;opacity:0;pointer-events:none}.carrier-choice span{display:block;padding:7px 11px;border-radius:8px;color:#64748b;font-size:12px;font-weight:700}.carrier-choice input:checked+span{background:#fff;color:#174ea6;box-shadow:0 1px 3px rgba(15,23,42,.15)}
-    .tabs{display:flex;gap:6px;margin:0 0 14px;padding:4px;background:#e9eef5;border-radius:13px;width:max-content}.tab-button{height:38px;background:transparent;color:#526071}.tab-button[aria-selected="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(15,23,42,.12)}.tab-panel[hidden]{display:none}.history-actions{display:flex;align-items:center;gap:12px}.history-count{font-size:13px;color:var(--muted)}
+    .tabs{display:flex;gap:6px;margin:0 0 14px;padding:4px;background:#e9eef5;border-radius:13px;width:max-content}.tab-button{height:38px;background:transparent;color:#526071}.tab-button[aria-selected="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(15,23,42,.12)}.tab-panel[hidden]{display:none}.history-actions{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;flex-shrink:0}.history-actions input{width:180px;height:36px}.history-count{font-size:13px;color:var(--muted);white-space:nowrap}.history-more-wrap{display:flex;justify-content:center;margin-top:14px}.reexport-controls{display:grid;grid-template-columns:100px minmax(220px,1fr) auto;gap:8px;align-items:center;min-width:470px}.history-guidance{display:block;max-width:280px;line-height:1.5}
     .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:1060px}th{font-size:12px;text-align:left;color:#475569;background:var(--surface);padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap}td{padding:12px;border-bottom:1px solid #edf0f4;font-size:13px;vertical-align:top}tr:last-child td{border-bottom:0}.order-no{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700}.items{max-width:300px;color:#475569}.badge{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:700}.ok{background:#ecfdf3;color:var(--success)}.warn{background:#fff7ed;color:var(--warning)}.error{background:#fef3f2;color:var(--danger)}.muted{color:var(--muted)}
     .notice{display:none;padding:13px 15px;border-radius:12px;margin-bottom:16px;font-size:13px}.notice.show{display:block}.notice.info{background:#eef4ff;color:#174ea6}.notice.bad{background:#fef3f2;color:var(--danger)}
     .empty{text-align:center;padding:48px;color:var(--muted)}.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:8px}@keyframes spin{to{transform:rotate(360deg)}}
@@ -45,7 +45,7 @@
   </section>
   <nav class="tabs" aria-label="注文表示"><button id="pendingTab" class="tab-button" aria-selected="true">未出力の注文</button><button id="historyTab" class="tab-button" aria-selected="false">出力済み一覧</button></nav>
   <section id="pendingPanel" class="panel tab-panel">
-    <div class="toolbar"><div><h2>未出力の注文</h2><div class="muted" style="font-size:12px;margin-top:4px">選択は一時的です。CSV出力が成功した注文だけが出力済み一覧へ移動します。</div></div>
+    <div class="toolbar"><div><h2>未出力の注文</h2><div class="muted" style="font-size:12px;margin-top:4px">CSVはサーバーで生成された時点で出力済みとして記録されます。ダウンロードできなかった場合は「出力済み一覧」から再出力してください。</div></div>
       <div class="actions"><input id="overrideReason" placeholder="配送会社を変更した場合の理由"></div>
     </div>
     <div class="export-bar">
@@ -55,20 +55,26 @@
     <div class="table-wrap"><table><thead><tr><th><input id="selectAll" type="checkbox"></th><th>注文番号</th><th>配送先</th><th>商品</th><th>自動判定</th><th>出力先</th><th>検証状態</th></tr></thead><tbody id="ordersBody"><tr><td colspan="7" class="empty">条件を指定して注文を取得してください。</td></tr></tbody></table></div>
   </section>
   <section id="historyPanel" class="panel tab-panel" hidden>
-    <div class="toolbar"><div><h2>出力済み一覧</h2><div class="muted" style="font-size:12px;margin-top:4px">CSVを生成した記録です。氏名・住所・電話番号は保存していません。</div></div><div class="history-actions"><span id="historyCount" class="history-count">0件</span><button id="historyRefresh" class="mini">更新</button></div></div>
-    <div class="table-wrap"><table><thead><tr><th>出力日時</th><th>注文番号</th><th>配送会社</th><th>再出力理由</th></tr></thead><tbody id="historyBody"><tr><td colspan="4" class="empty">出力履歴を読み込んでいます。</td></tr></tbody></table></div>
+    <div class="toolbar"><div><h2>出力済み一覧</h2><div class="muted" style="font-size:12px;margin-top:4px">CSVをサーバーで生成した時点の記録です。氏名・住所・電話番号は保存していません。ダウンロードに失敗した場合は、対象期間の注文を取得してからここで再出力してください。</div></div><div class="history-actions"><input id="historySearch" aria-label="出力履歴の注文番号検索" placeholder="注文番号で検索"><button id="historySearchButton" class="mini">検索</button><span id="historyCount" class="history-count">0件</span><button id="historyRefresh" class="mini">更新</button></div></div>
+    <div class="table-wrap"><table><thead><tr><th>出力日時</th><th>注文番号</th><th>配送会社</th><th>再出力理由</th><th>再出力</th></tr></thead><tbody id="historyBody"><tr><td colspan="5" class="empty">出力履歴を読み込んでいます。</td></tr></tbody></table></div>
+    <div class="history-more-wrap"><button id="historyMore" class="mini" hidden>さらに表示</button></div>
   </section>
 </main>
 <script>
-  const state={previewId:null,orders:[],selectedIds:new Set(),destinations:new Map(),history:[]};
+  const state={previewId:null,allOrders:[],orders:[],selectedIds:new Set(),destinations:new Map(),history:[],historyTotal:0,historyQuery:'',exporting:false};
   const $=id=>document.getElementById(id);
   const today=new Date();
-  const iso=d=>d.toISOString().slice(0,10);
-  $('startDate').value=iso(today);
-  $('endDate').value=iso(today);
+  const localDate=d=>{
+    const year=d.getFullYear();
+    const month=String(d.getMonth()+1).padStart(2,'0');
+    const day=String(d.getDate()).padStart(2,'0');
+    return `${year}-${month}-${day}`;
+  };
+  $('startDate').value=localDate(today);
+  $('endDate').value=localDate(today);
   const next=new Date(today);
   next.setDate(next.getDate()+1);
-  $('shippingDate').value=iso(next);
+  $('shippingDate').value=localDate(next);
 
   function notice(message,bad=false){
     const el=$('notice');
@@ -79,6 +85,12 @@
   function setLoading(on){
     $('fetchButton').disabled=on;
     $('fetchButton').innerHTML=on?'<span class="spinner"></span>取得中':'Shopifyから注文取得';
+  }
+
+  function setExportLoading(on){
+    state.exporting=on;
+    updateSelectionControls();
+    document.querySelectorAll('.reexport-button').forEach(button=>{button.disabled=on});
   }
 
   function badge(text,kind){
@@ -97,8 +109,8 @@
     const yamato=selectedIdsForCarrier('yamato').length;
     const sagawa=selectedIdsForCarrier('sagawa').length;
     const undecided=selected-yamato-sagawa;
-    $('yamatoExport').disabled=yamato===0;
-    $('sagawaExport').disabled=sagawa===0;
+    $('yamatoExport').disabled=state.exporting||yamato===0;
+    $('sagawaExport').disabled=state.exporting||sagawa===0;
     $('yamatoSelected').textContent=yamato;
     $('sagawaSelected').textContent=sagawa;
     $('selectionSummary').textContent=`${selected}件選択（ヤマト ${yamato}・佐川 ${sagawa}${undecided?`・未指定 ${undecided}`:''}）`;
@@ -186,7 +198,8 @@
   function resetPreview(data){
     const exported=data.orders.filter(order=>order.already_exported).length;
     state.previewId=data.preview_id;
-    state.orders=data.orders.filter(order=>!order.already_exported);
+    state.allOrders=data.orders;
+    state.orders=state.allOrders.filter(order=>!order.already_exported);
     state.selectedIds.clear();
     state.destinations.clear();
     state.orders.forEach(order=>{
@@ -195,6 +208,7 @@
       }
     });
     renderOrders();
+    renderHistory();
     const suffix=exported?` 出力済み${exported}件は「出力済み一覧」で確認できます。`:'';
     notice(`未出力の注文を${state.orders.length}件取得しました。${suffix}`);
   }
@@ -221,11 +235,12 @@
   function renderHistory(){
     const body=$('historyBody');
     body.replaceChildren();
-    $('historyCount').textContent=`${state.history.length}件`;
+    $('historyCount').textContent=`${state.history.length} / ${state.historyTotal}件`;
+    $('historyMore').hidden=state.history.length>=state.historyTotal;
     if(!state.history.length){
       const row=body.insertRow();
       const cell=row.insertCell();
-      cell.colSpan=4;
+      cell.colSpan=5;
       cell.className='empty';
       cell.textContent='出力履歴はありません。';
       return;
@@ -239,19 +254,55 @@
       number.textContent=record.order_number;
       row.insertCell().append(badge(record.carrier==='yamato'?'ヤマト':'佐川',record.carrier==='yamato'?'ok':'warn'));
       row.insertCell().textContent=record.reexport_reason||'—';
+      const action=row.insertCell();
+      const order=state.allOrders.find(candidate=>candidate.order_id===record.order_id);
+      if(!order){
+        const guidance=document.createElement('span');
+        guidance.className='muted history-guidance';
+        guidance.textContent='再出力するには、先にこの注文を含む対象期間の注文を取得してください。';
+        action.append(guidance);
+        return;
+      }
+      const controls=document.createElement('div');
+      controls.className='reexport-controls';
+      const carrier=document.createElement('select');
+      carrier.setAttribute('aria-label',`${record.order_number}の再出力先`);
+      [['yamato','ヤマト'],['sagawa','佐川']].forEach(([value,text])=>{
+        const option=document.createElement('option');
+        option.value=value;
+        option.textContent=text;
+        option.selected=value===record.carrier;
+        carrier.append(option);
+      });
+      const reason=document.createElement('input');
+      reason.placeholder='再出力理由（必須）';
+      reason.setAttribute('aria-label',`${record.order_number}の再出力理由`);
+      const button=document.createElement('button');
+      button.className='mini reexport-button';
+      button.textContent='再出力';
+      button.disabled=state.exporting;
+      button.addEventListener('click',()=>reexportCsv(record,order,carrier.value,reason.value));
+      controls.append(carrier,reason,button);
+      action.append(controls);
     });
   }
 
-  async function loadHistory(){
+  async function loadHistory({showError=true,reset=true}={}){
+    const offset=reset?0:state.history.length;
+    const params=new URLSearchParams({limit:'100',offset:String(offset)});
+    if(state.historyQuery)params.set('order_number',state.historyQuery);
     try{
-      const response=await fetch('/api/history');
+      const response=await fetch(`/api/history?${params}`);
       const data=await response.json();
       if(!response.ok)throw new Error(data.detail||'出力履歴を取得できませんでした');
-      state.history=data.records;
+      state.history=reset?data.records:[...state.history,...data.records];
+      state.historyTotal=data.total;
       renderHistory();
     }catch(error){
-      notice(error.message,true);
+      if(showError)notice(error.message,true);
+      return false;
     }
+    return true;
   }
 
   $('searchForm').addEventListener('submit',async event=>{
@@ -297,9 +348,22 @@
   $('clearSelection').addEventListener('click',()=>{state.selectedIds.clear();renderOrders()});
   $('pendingTab').addEventListener('click',()=>activateTab('pending'));
   $('historyTab').addEventListener('click',()=>activateTab('history'));
-  $('historyRefresh').addEventListener('click',loadHistory);
+  $('historyRefresh').addEventListener('click',()=>loadHistory());
+  $('historySearchButton').addEventListener('click',()=>{
+    state.historyQuery=$('historySearch').value.trim();
+    loadHistory();
+  });
+  $('historySearch').addEventListener('keydown',event=>{
+    if(event.key==='Enter'){
+      event.preventDefault();
+      state.historyQuery=event.target.value.trim();
+      loadHistory();
+    }
+  });
+  $('historyMore').addEventListener('click',()=>loadHistory({reset:false}));
 
   async function exportCsv(carrier){
+    if(state.exporting)return;
     const ids=selectedIdsForCarrier(carrier);
     if(!ids.length){
       notice(`${carrier==='yamato'?'ヤマト':'佐川'}に設定された注文を選択してください。`,true);
@@ -320,6 +384,7 @@
       notice('配送会社を変更した理由を入力してください。',true);
       return;
     }
+    setExportLoading(true);
     try{
       const response=await fetch(`/api/export/${carrier}`,{
         method:'POST',
@@ -347,12 +412,68 @@
         state.selectedIds.delete(id);
         state.destinations.delete(id);
       });
+      state.allOrders=state.allOrders.filter(order=>!ids.includes(order.order_id));
       state.orders=state.orders.filter(order=>!ids.includes(order.order_id));
       renderOrders();
-      await loadHistory();
+      await loadHistory({showError:false});
       notice(`${carrier==='yamato'?'ヤマト':'佐川'}CSV（${ids.length}件）を生成し、出力済み一覧へ移動しました。`);
     }catch(error){
       notice(error.message,true);
+    }finally{
+      setExportLoading(false);
+    }
+  }
+
+  async function reexportCsv(record,order,carrier,rawReason){
+    if(state.exporting)return;
+    const reason=rawReason.trim();
+    if(!reason){
+      notice('再出力理由を入力してください。',true);
+      return;
+    }
+    const overrides={};
+    const override_reasons={};
+    if(carrier!==order.suggested_carrier){
+      overrides[order.order_id]=carrier;
+      override_reasons[order.order_id]=reason;
+    }
+    setExportLoading(true);
+    try{
+      const response=await fetch(`/api/export/${carrier}`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          preview_id:state.previewId,
+          order_ids:[order.order_id],
+          overrides,
+          override_reasons,
+          reexport_reason:reason,
+        }),
+      });
+      if(!response.ok){
+        const data=await response.json();
+        throw new Error(data.detail||'CSV再生成に失敗しました');
+      }
+      const blob=await response.blob();
+      const disposition=decodeURIComponent(response.headers.get('content-disposition')||'');
+      const match=disposition.match(/filename\*=UTF-8''(.+)$/);
+      const filename=match?match[1]:`wakou_${carrier}.csv`;
+      const objectUrl=URL.createObjectURL(blob);
+      const link=document.createElement('a');
+      link.href=objectUrl;
+      link.download=filename;
+      link.style.display='none';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(()=>URL.revokeObjectURL(objectUrl),1000);
+      state.allOrders=state.allOrders.filter(candidate=>candidate.order_id!==order.order_id);
+      await loadHistory({showError:false});
+      notice(`${record.order_number}を${carrier==='yamato'?'ヤマト':'佐川'}CSVとして再生成しました。`);
+    }catch(error){
+      notice(error.message,true);
+    }finally{
+      setExportLoading(false);
     }
   }
 
