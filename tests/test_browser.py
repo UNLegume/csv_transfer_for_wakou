@@ -253,12 +253,36 @@ def test_unassigned_order_can_be_selected_without_change_reason(tmp_path: Path) 
         row = page.locator("#ordersBody tr").filter(has_text="#BROWSER003")
         row.locator("label").filter(has_text="ヤマト").click()
         row.locator('input[type="checkbox"]').check()
-        expect(page.locator("#overrideReason")).to_have_value("")
+        expect(page.locator("#overrideReason")).to_have_count(0)
 
         with page.expect_download():
             page.locator("#yamatoExport").click()
         expect(page.locator("#notice")).to_contain_text(
             "ヤマトCSV（1件）を生成し、出力済み一覧へ移動しました。"
+        )
+        context.close()
+        browser.close()
+
+
+def test_automatically_assigned_carrier_can_be_changed_without_reason(tmp_path: Path) -> None:
+    with running_app(tmp_path) as base_url, sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        context = browser.new_context(
+            accept_downloads=True,
+            http_credentials={"username": "operator", "password": "test-secret"},
+        )
+        page = context.new_page()
+        page.goto(base_url)
+        fetch_orders(page)
+
+        row = page.locator("#ordersBody tr").filter(has_text="#BROWSER001")
+        row.locator("label").filter(has_text="佐川").click()
+        row.locator('input[type="checkbox"]').check()
+
+        with page.expect_download():
+            page.locator("#sagawaExport").click()
+        expect(page.locator("#notice")).to_contain_text(
+            "佐川CSV（1件）を生成し、出力済み一覧へ移動しました。"
         )
         context.close()
         browser.close()

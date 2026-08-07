@@ -46,7 +46,6 @@ class ExportRequest(BaseModel):
     preview_id: str
     order_ids: list[str] = Field(min_length=1)
     overrides: dict[str, Carrier] = Field(default_factory=dict)
-    override_reasons: dict[str, str] = Field(default_factory=dict)
     reexport_reason: str | None = None
 
 
@@ -252,9 +251,8 @@ def create_app(
             decision = _decision(order, resolved_config)
             override = request.overrides.get(order.order_id)
             if override is not None:
-                override_reason = request.override_reasons.get(order.order_id, "")
                 try:
-                    decision = decision.override(override, override_reason)
+                    decision = decision.override(override)
                 except ValueError as exc:
                     raise HTTPException(422, str(exc)) from exc
             if decision.carrier is Carrier.NEEDS_REVIEW:

@@ -22,27 +22,22 @@ class RoutingDecision:
     carrier: Carrier
     reason_code: ReasonCode
     explanation: str
-    override_reason: str | None = None
 
-    def override(self, carrier: Carrier, reason: str) -> "RoutingDecision":
+    def override(self, carrier: Carrier) -> "RoutingDecision":
         if carrier is Carrier.NEEDS_REVIEW:
             raise ValueError("手動変更先はヤマトまたは佐川を指定してください")
         if carrier is self.carrier:
             return self
-        reason = reason.strip()
         if self.carrier is Carrier.NEEDS_REVIEW:
             return RoutingDecision(
                 carrier=carrier,
                 reason_code=ReasonCode.MANUAL_ASSIGNMENT,
                 explanation="手動指定",
             )
-        if not reason:
-            raise ValueError("手動変更には理由が必要です")
         return RoutingDecision(
             carrier=carrier,
             reason_code=ReasonCode.MANUAL_OVERRIDE,
-            explanation=f"手動変更: {reason}",
-            override_reason=reason,
+            explanation="手動変更",
         )
 
 

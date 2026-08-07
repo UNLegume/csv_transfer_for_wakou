@@ -364,7 +364,7 @@ async def test_unconfigured_product_can_be_manually_routed_without_reason(
 
 
 @pytest.mark.asyncio
-async def test_changing_an_automatically_assigned_carrier_still_requires_reason(
+async def test_changing_an_automatically_assigned_carrier_does_not_require_reason(
     tmp_path: Path,
 ) -> None:
     fake = FakeShopifyClient((order(Carrier.YAMATO),))
@@ -380,7 +380,7 @@ async def test_changing_an_automatically_assigned_carrier_still_requires_reason(
                 },
             )
         ).json()
-        blocked = await client.post(
+        allowed = await client.post(
             "/api/export/sagawa",
             json={
                 "preview_id": preview["preview_id"],
@@ -389,5 +389,4 @@ async def test_changing_an_automatically_assigned_carrier_still_requires_reason(
             },
         )
 
-    assert blocked.status_code == 422
-    assert "理由" in blocked.json()["detail"]
+    assert allowed.status_code == 200

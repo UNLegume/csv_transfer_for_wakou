@@ -40,27 +40,23 @@ def test_routing_is_independent_of_input_order() -> None:
     )
 
 
-def test_manual_override_requires_and_preserves_reason() -> None:
+def test_manual_override_does_not_require_reason() -> None:
     automatic = route_order([item(Carrier.YAMATO)], yamato_quantity_limit=2)
-    overridden = automatic.override(Carrier.SAGAWA, "梱包サイズ超過")
+    overridden = automatic.override(Carrier.SAGAWA)
     assert overridden == RoutingDecision(
         carrier=Carrier.SAGAWA,
         reason_code=ReasonCode.MANUAL_OVERRIDE,
-        explanation="手動変更: 梱包サイズ超過",
-        override_reason="梱包サイズ超過",
+        explanation="手動変更",
     )
-    with pytest.raises(ValueError, match="理由"):
-        automatic.override(Carrier.SAGAWA, " ")
 
 
 def test_manual_assignment_from_needs_review_does_not_require_reason() -> None:
     unresolved = route_order([item(None)], yamato_quantity_limit=2)
 
-    assigned = unresolved.override(Carrier.YAMATO, "")
+    assigned = unresolved.override(Carrier.YAMATO)
 
     assert assigned.carrier is Carrier.YAMATO
     assert assigned.reason_code is ReasonCode.MANUAL_ASSIGNMENT
-    assert assigned.override_reason is None
 
 
 def test_line_specific_yamato_quantity_limit_is_enforced() -> None:

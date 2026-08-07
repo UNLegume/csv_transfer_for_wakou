@@ -14,14 +14,14 @@
     .form-grid{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr)) auto;gap:14px;align-items:end}label{display:grid;gap:7px;font-size:13px;font-weight:600}input,select{height:42px;border:1px solid #cbd5e1;border-radius:10px;padding:0 12px;font:inherit;background:#fff;color:var(--ink)}input:focus,select:focus{outline:3px solid rgba(27,97,201,.14);border-color:var(--blue)}
     button{height:42px;border:0;border-radius:11px;padding:0 18px;font-weight:650;cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}.primary{background:var(--blue);color:#fff}.secondary{background:#eef4ff;color:#174ea6}.dark{background:#181d26;color:#fff}
     .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}.metric{background:#fff;border:1px solid var(--line);border-radius:16px;padding:17px}.metric span{font-size:12px;color:var(--muted)}.metric strong{display:block;font-size:26px;margin-top:5px}
-    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}.toolbar h2{font-size:18px;margin:0}.actions{display:flex;gap:10px;align-items:center}.actions input{width:260px}.reexport{width:230px}
+    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}.toolbar h2{font-size:18px;margin:0}.reexport{width:230px}
     .export-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px;margin:0 0 14px;background:#f8fafc;border:1px solid var(--line);border-radius:14px}.selection-tools,.export-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.mini{height:36px;padding:0 12px;background:#fff;border:1px solid #cbd5e1;color:#334155}.selection-summary{font-size:13px;color:var(--muted);margin-left:4px}.export-actions button{min-width:170px}.count-pill{display:inline-grid;place-items:center;min-width:24px;height:24px;margin-left:8px;padding:0 7px;border-radius:999px;background:rgba(255,255,255,.22);font-size:12px}.secondary .count-pill{background:#dce8ff;color:#174ea6}
     .carrier-choice{display:inline-flex;padding:3px;background:#eef1f5;border-radius:10px;gap:3px}.carrier-choice label{display:block;cursor:pointer}.carrier-choice input{position:absolute;opacity:0;pointer-events:none}.carrier-choice span{display:block;padding:7px 11px;border-radius:8px;color:#64748b;font-size:12px;font-weight:700}.carrier-choice input:checked+span{background:#fff;color:#174ea6;box-shadow:0 1px 3px rgba(15,23,42,.15)}
     .tabs{display:flex;gap:6px;margin:0 0 14px;padding:4px;background:#e9eef5;border-radius:13px;width:max-content}.tab-button{height:38px;background:transparent;color:#526071}.tab-button[aria-selected="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(15,23,42,.12)}.tab-panel[hidden]{display:none}.history-actions{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;flex-shrink:0}.history-actions input{width:180px;height:36px}.history-count{font-size:13px;color:var(--muted);white-space:nowrap}.history-more-wrap{display:flex;justify-content:center;margin-top:14px}.reexport-controls{display:grid;grid-template-columns:100px minmax(220px,1fr) auto;gap:8px;align-items:center;min-width:470px}.history-guidance{display:block;max-width:280px;line-height:1.5}
     .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:1060px}th{font-size:12px;text-align:left;color:#475569;background:var(--surface);padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap}td{padding:12px;border-bottom:1px solid #edf0f4;font-size:13px;vertical-align:top}tr:last-child td{border-bottom:0}.order-no{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700}.items{max-width:300px;color:#475569}.badge{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:700}.ok{background:#ecfdf3;color:var(--success)}.warn{background:#fff7ed;color:var(--warning)}.error{background:#fef3f2;color:var(--danger)}.muted{color:var(--muted)}
     .notice{display:none;padding:13px 15px;border-radius:12px;margin-bottom:16px;font-size:13px}.notice.show{display:block}.notice.info{background:#eef4ff;color:#174ea6}.notice.bad{background:#fef3f2;color:var(--danger)}
     .empty{text-align:center;padding:48px;color:var(--muted)}.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-right:8px}@keyframes spin{to{transform:rotate(360deg)}}
-    @media(max-width:900px){main,.header-inner{padding-left:18px;padding-right:18px}.form-grid{grid-template-columns:1fr 1fr}.summary{grid-template-columns:1fr 1fr}.hero{display:block}.scope{display:none}.toolbar,.export-bar{align-items:stretch;flex-direction:column}.actions{display:grid;grid-template-columns:1fr 1fr}.export-actions button{flex:1}}
+    @media(max-width:900px){main,.header-inner{padding-left:18px;padding-right:18px}.form-grid{grid-template-columns:1fr 1fr}.summary{grid-template-columns:1fr 1fr}.hero{display:block}.scope{display:none}.toolbar,.export-bar{align-items:stretch;flex-direction:column}.export-actions button{flex:1}}
   </style>
 </head>
 <body>
@@ -45,9 +45,7 @@
   </section>
   <nav class="tabs" aria-label="注文表示"><button id="pendingTab" class="tab-button" aria-selected="true">未出力の注文</button><button id="historyTab" class="tab-button" aria-selected="false">出力済み一覧</button></nav>
   <section id="pendingPanel" class="panel tab-panel">
-    <div class="toolbar"><div><h2>未出力の注文</h2><div class="muted" style="font-size:12px;margin-top:4px">CSVはサーバーで生成された時点で出力済みとして記録されます。ダウンロードできなかった場合は「出力済み一覧」から再出力してください。</div></div>
-      <div class="actions"><input id="overrideReason" placeholder="配送会社を変更した場合の理由"></div>
-    </div>
+    <div class="toolbar"><div><h2>未出力の注文</h2><div class="muted" style="font-size:12px;margin-top:4px">CSVはサーバーで生成された時点で出力済みとして記録されます。ダウンロードできなかった場合は「出力済み一覧」から再出力してください。</div></div></div>
     <div class="export-bar">
       <div class="selection-tools"><button id="selectYamato" class="mini">ヤマト候補を選択</button><button id="selectSagawa" class="mini">佐川候補を選択</button><button id="clearSelection" class="mini">選択解除</button><span id="selectionSummary" class="selection-summary">0件選択</span></div>
       <div class="export-actions"><button id="yamatoExport" class="secondary" disabled>ヤマトCSVをダウンロード <span id="yamatoSelected" class="count-pill">0</span></button><button id="sagawaExport" class="dark" disabled>佐川CSVをダウンロード <span id="sagawaSelected" class="count-pill">0</span></button></div>
@@ -370,30 +368,19 @@
       return;
     }
     const overrides={};
-    const override_reasons={};
-    const generalReason=$('overrideReason').value.trim();
-    let reasonRequired=false;
     ids.forEach(id=>{
       const order=state.orders.find(candidate=>candidate.order_id===id);
       const selected=state.destinations.get(id);
       if(selected!==order.suggested_carrier){
         overrides[id]=selected;
-        if(order.suggested_carrier!=='needs_review'){
-          reasonRequired=true;
-          override_reasons[id]=generalReason;
-        }
       }
     });
-    if(reasonRequired&&!generalReason){
-      notice('配送会社を変更した理由を入力してください。',true);
-      return;
-    }
     setExportLoading(true);
     try{
       const response=await fetch(`/api/export/${carrier}`,{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({preview_id:state.previewId,order_ids:ids,overrides,override_reasons,reexport_reason:null}),
+        body:JSON.stringify({preview_id:state.previewId,order_ids:ids,overrides,reexport_reason:null}),
       });
       if(!response.ok){
         const data=await response.json();
@@ -436,10 +423,8 @@
       return;
     }
     const overrides={};
-    const override_reasons={};
     if(carrier!==order.suggested_carrier){
       overrides[order.order_id]=carrier;
-      override_reasons[order.order_id]=reason;
     }
     setExportLoading(true);
     try{
@@ -450,7 +435,6 @@
           preview_id:state.previewId,
           order_ids:[order.order_id],
           overrides,
-          override_reasons,
           reexport_reason:reason,
         }),
       });
