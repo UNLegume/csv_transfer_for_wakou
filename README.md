@@ -86,6 +86,30 @@ CSV出力を受けるworkerが異なり、注文を参照できない場合が�
 
 ブラウザで `http://127.0.0.1:8000` を開きます。
 
+### Mac miniで他サービスと分離して常駐させる
+
+既存のmacOSログインユーザー内に、アプリ専用の実行プロファイル、ポート、ログ、
+SQLite履歴、LaunchAgentを作成できます。ソースコードと秘密情報・実行データを分離するため、
+同じMac miniで他サービスが動いていてもパスやlaunchdラベルが衝突しません。
+
+```bash
+uv run wakou-macos-profile prepare \
+  --profile production \
+  --app-dir "$PWD" \
+  --port 8100
+```
+
+生成されたプロファイルの`.env`を人間が設定した後、検証・常駐登録します。
+
+```bash
+uv run wakou-macos-profile validate --profile production
+uv run wakou-macos-profile install --profile production
+uv run wakou-macos-profile status --profile production
+```
+
+Mac miniへの導入、Tailscale HTTPS、更新、バックアップ、AI作業時の停止点を含む完全な手順は
+[`docs/mac-mini-profile-deployment.md`](docs/mac-mini-profile-deployment.md)を参照してください。
+
 1. 注文日の開始・終了と出荷予定日を入力
 2. 「Shopifyから注文取得」を押す
 3. 配送会社、住所検証、出力済み状態を確認

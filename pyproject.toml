@@ -18,6 +18,9 @@ dependencies = [
   "uvicorn[standard]>=0.35,<1",
 ]
 
+[project.scripts]
+wakou-macos-profile = "wakou_transfer.macos_profile:main"
+
 [project.optional-dependencies]
 dev = [
   "mypy>=1.17,<2",

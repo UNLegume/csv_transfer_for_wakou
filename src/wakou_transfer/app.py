@@ -182,7 +182,7 @@ def create_app(
 
     @app.get("/api/health")
     async def health() -> dict[str, str]:
-        return {"status": "ok"}
+        return {"status": "ok", "service": "wakou-transfer"}
 
     @app.get("/api/history", dependencies=[Depends(require_auth)])
     async def history_list(

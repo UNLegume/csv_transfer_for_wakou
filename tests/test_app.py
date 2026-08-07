@@ -117,6 +117,22 @@ async def test_operation_endpoints_require_authentication(tmp_path: Path) -> Non
 
 
 @pytest.mark.asyncio
+async def test_health_identifies_the_wakou_service(tmp_path: Path) -> None:
+    app = create_app(
+        config(),
+        FakeShopifyClient(tuple()),
+        ExportHistory(tmp_path / "history.sqlite3"),
+    )
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.get("/api/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok", "service": "wakou-transfer"}
+
+
+@pytest.mark.asyncio
 async def test_index_serves_japanese_operation_screen(tmp_path: Path) -> None:
     app = create_app(
         config(),
