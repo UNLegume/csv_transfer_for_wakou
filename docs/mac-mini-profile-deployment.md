@@ -122,9 +122,7 @@ uv run wakou-macos-profile validate --profile production
 
 - Shopify Client ID／Secret
 - Basic認証パスワード
-- 発送元情報
-- 佐川請求コード
-- ヤマト依頼主コード
+- ヤマト／佐川CSVの出力設定
 
 AIエージェントは次を厳守します。
 
@@ -334,7 +332,6 @@ uv run wakou-macos-profile install --profile production
 AIエージェントが停止して人間へ確認すべき操作：
 
 - `.env`への秘密値入力
-- 本番用請求コードの確定
 - Tailscaleのログインとアクセス許可
 - Mac miniの再起動
 - ワコウ側システムへの本番データ取込み

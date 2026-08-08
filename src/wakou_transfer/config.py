@@ -1,8 +1,6 @@
 """環境ごとに与える固定値と配送会社別制約。"""
 
-from typing import Any
-
-from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
+from pydantic import BaseModel, ConfigDict, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,16 +8,7 @@ class ConfigModel(BaseModel):
     model_config = ConfigDict(frozen=True, str_strip_whitespace=True)
 
 
-class SenderConfig(ConfigModel):
-    company_name: str = Field(min_length=1)
-    requester_name: str = Field(min_length=1)
-    postal_code: str = Field(pattern=r"^\d{7}$")
-    address: str = Field(min_length=1)
-    phone: str = Field(pattern=r"^\d+$")
-
-
 class SagawaConfig(ConfigModel):
-    billing_code: str = Field(min_length=1)
     amount: str = "0"
     amount_unit: str = "0円"
     include_delivery_date: bool = True
@@ -36,13 +25,10 @@ class SagawaConfig(ConfigModel):
 
 
 class YamatoConfig(ConfigModel):
-    requester_code: str = Field(min_length=1)
     label_type: str = "A"
     item_name: str = "ネットショップ購入品"
     collect_amount: str = "0"
     collect_tax: str = "0"
-    billing_classification_code: str = ""
-    freight_management_number: str = ""
 
 
 class CarrierFieldLimits(ConfigModel):
@@ -67,25 +53,9 @@ class AppConfig(BaseSettings):
         extra="ignore",
     )
 
-    sender: SenderConfig
-    sagawa: SagawaConfig
-    yamato: YamatoConfig
+    sagawa: SagawaConfig = Field(default_factory=SagawaConfig)
+    yamato: YamatoConfig = Field(default_factory=YamatoConfig)
     auth_username: str = Field(min_length=1)
     auth_password: SecretStr
     limits: FieldLimits = Field(default_factory=FieldLimits)
     yamato_quantity_limit: int | None = Field(default=None, gt=0)
-
-    @model_validator(mode="before")
-    @classmethod
-    def report_missing_sections(cls, value: Any) -> Any:
-        if isinstance(value, dict):
-            labels = {
-                "sender": "出荷元情報",
-                "sagawa": "佐川設定",
-                "yamato": "ヤマト設定",
-            }
-            missing = [label for key, label in labels.items() if not value.get(key)]
-            if missing:
-                raise ValueError(f"{'・'.join(missing)}が設定されていません")
-        return value
-

@@ -29,10 +29,7 @@ def make_app(tmp_path: Path) -> Path:
         "SHOPIFY_CLIENT_ID=your-client-id\n"
         "SHOPIFY_CLIENT_SECRET=your-client-secret\n"
         "WAKOU_AUTH_USERNAME=operator\n"
-        "WAKOU_AUTH_PASSWORD=change-this-to-a-long-random-password\n"
-        "WAKOU_SENDER__COMPANY_NAME=株式会社サンプル\n"
-        "WAKOU_SAGAWA__BILLING_CODE=000123456789\n"
-        "WAKOU_YAMATO__REQUESTER_CODE=000987654321\n",
+        "WAKOU_AUTH_PASSWORD=change-this-to-a-long-random-password\n",
         encoding="utf-8",
     )
     return app_dir
@@ -52,14 +49,7 @@ def configured_deployment(tmp_path: Path) -> DeploymentProfile:
         "SHOPIFY_CLIENT_ID=client-id\n"
         "SHOPIFY_CLIENT_SECRET=secret-value\n"
         "WAKOU_AUTH_USERNAME=operator\n"
-        "WAKOU_AUTH_PASSWORD=a-long-random-password\n"
-        "WAKOU_SENDER__COMPANY_NAME=株式会社ワコウ\n"
-        "WAKOU_SENDER__REQUESTER_NAME=通販事業部\n"
-        "WAKOU_SENDER__POSTAL_CODE=1000001\n"
-        "WAKOU_SENDER__ADDRESS=東京都千代田区1-1\n"
-        "WAKOU_SENDER__PHONE=0312345678\n"
-        "WAKOU_SAGAWA__BILLING_CODE=123456789012\n"
-        "WAKOU_YAMATO__REQUESTER_CODE=987654321098\n",
+        "WAKOU_AUTH_PASSWORD=a-long-random-password\n",
         encoding="utf-8",
     )
     os.chmod(deployment.profile_dir / ".env", 0o600)
@@ -175,6 +165,28 @@ def test_validate_reports_placeholders_without_echoing_secret_values(tmp_path: P
     assert any("SHOPIFY_STORE_DOMAIN" in error for error in errors)
     assert any("SHOPIFY_CLIENT_SECRET" in error for error in errors)
     assert all("your-client-secret" not in error for error in errors)
+
+
+def test_validate_accepts_profile_without_sender_or_contract_codes(tmp_path: Path) -> None:
+    deployment = DeploymentProfile.create(
+        profile="production",
+        app_dir=make_app(tmp_path),
+        profile_root=tmp_path / "profiles",
+        port=8100,
+        uv_bin=Path("/bin/sh"),
+    )
+    prepare_profile(deployment)
+    (deployment.profile_dir / ".env").write_text(
+        "SHOPIFY_STORE_DOMAIN=store.myshopify.com\n"
+        "SHOPIFY_CLIENT_ID=client-id\n"
+        "SHOPIFY_CLIENT_SECRET=secret-value\n"
+        "WAKOU_AUTH_USERNAME=operator\n"
+        "WAKOU_AUTH_PASSWORD=a-long-random-password\n",
+        encoding="utf-8",
+    )
+    os.chmod(deployment.profile_dir / ".env", 0o600)
+
+    assert validate_profile(deployment) == []
 
 
 def test_validate_parses_quoted_empty_and_example_values(tmp_path: Path) -> None:
@@ -434,14 +446,7 @@ def test_validate_accepts_configured_profile(tmp_path: Path) -> None:
         "SHOPIFY_CLIENT_ID=client-id\n"
         "SHOPIFY_CLIENT_SECRET=secret-value\n"
         "WAKOU_AUTH_USERNAME=operator\n"
-        "WAKOU_AUTH_PASSWORD=a-long-random-password\n"
-        "WAKOU_SENDER__COMPANY_NAME=株式会社ワコウ\n"
-        "WAKOU_SENDER__REQUESTER_NAME=通販事業部\n"
-        "WAKOU_SENDER__POSTAL_CODE=1000001\n"
-        "WAKOU_SENDER__ADDRESS=東京都千代田区1-1\n"
-        "WAKOU_SENDER__PHONE=0312345678\n"
-        "WAKOU_SAGAWA__BILLING_CODE=123456789012\n"
-        "WAKOU_YAMATO__REQUESTER_CODE=987654321098\n",
+        "WAKOU_AUTH_PASSWORD=a-long-random-password\n",
         encoding="utf-8",
     )
     os.chmod(deployment.profile_dir / ".env", 0o600)

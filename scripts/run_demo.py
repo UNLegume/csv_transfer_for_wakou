@@ -70,15 +70,6 @@ def demo_order(
 def build_app():
     config = AppConfig.model_validate(
         {
-            "sender": {
-                "company_name": "株式会社デモ",
-                "requester_name": "テスト店舗",
-                "postal_code": "1000001",
-                "address": "東京都千代田区テスト町1-1",
-                "phone": "0312345678",
-            },
-            "sagawa": {"billing_code": "000000000000"},
-            "yamato": {"requester_code": "000000000000"},
             "auth_username": "demo",
             "auth_password": "demo-only",
             "yamato_quantity_limit": 3,

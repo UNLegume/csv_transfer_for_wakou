@@ -28,24 +28,12 @@ _REQUIRED_ENV_KEYS = (
     "SHOPIFY_CLIENT_SECRET",
     "WAKOU_AUTH_USERNAME",
     "WAKOU_AUTH_PASSWORD",
-    "WAKOU_SENDER__COMPANY_NAME",
-    "WAKOU_SENDER__REQUESTER_NAME",
-    "WAKOU_SENDER__POSTAL_CODE",
-    "WAKOU_SENDER__ADDRESS",
-    "WAKOU_SENDER__PHONE",
-    "WAKOU_SAGAWA__BILLING_CODE",
-    "WAKOU_YAMATO__REQUESTER_CODE",
 )
 _EXAMPLE_VALUES = {
     "your-store.myshopify.com",
     "your-client-id",
     "your-client-secret",
     "change-this-to-a-long-random-password",
-    "株式会社サンプル",
-    "通販部",
-    "東京都千代田区千代田1-1",
-    "000123456789",
-    "000987654321",
 }
 
 

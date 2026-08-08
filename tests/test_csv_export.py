@@ -109,15 +109,6 @@ YAMATO_SAMPLE_HEADERS = (
 def config() -> AppConfig:
     return AppConfig.model_validate(
         {
-            "sender": {
-                "company_name": "発送元株式会社",
-                "requester_name": "通販部",
-                "postal_code": "0010001",
-                "address": "北海道札幌市中央区1-2",
-                "phone": "0110000000",
-            },
-            "sagawa": {"billing_code": "000123456789"},
-            "yamato": {"requester_code": "000987654321"},
             "auth_username": "operator",
             "auth_password": "test-secret",
         }
@@ -155,6 +146,46 @@ def decoded_rows(payload: bytes) -> list[list[str]]:
     return list(csv.reader(io.StringIO(payload.decode("cp932"), newline="")))
 
 
+def test_exports_leave_sender_and_contract_fields_blank() -> None:
+    minimal = AppConfig.model_validate(
+        {
+            "auth_username": "operator",
+            "auth_password": "test-secret",
+        }
+    )
+
+    sagawa_rows = decoded_rows(export_sagawa_csv([order()], minimal))
+    sagawa = dict(zip(sagawa_rows[0], sagawa_rows[1], strict=True))
+    for header in (
+        "C：出荷元企業名",
+        "C：出荷元郵便番号",
+        "C：出荷元住所",
+        "C:出荷元電話番号",
+        "CM：ご依頼主電話番号",
+        "CM：ご依頼主郵便番号",
+        "CM：ご依頼主住所１",
+        "CM：ご依頼主名称１",
+        "請求コード",
+    ):
+        assert sagawa[header] == ""
+
+    yamato_rows = decoded_rows(export_yamato_csv([order()], minimal))
+    yamato = dict(zip(yamato_rows[0], yamato_rows[1], strict=True))
+    for header in (
+        "依頼主コード",
+        "CM：ご依頼主電話番号",
+        "依頼主電話番号（枝番）",
+        "CM：ご依頼主郵便番号",
+        "CM：ご依頼主住所",
+        "CM：ご依頼主住所２",
+        "CM：ご依頼主名称１",
+        "依頼主名（カナ）",
+        "請求先分類コード",
+        "運賃管理番号",
+    ):
+        assert yamato[header] == ""
+
+
 def assert_crlf_only(payload: bytes) -> None:
     assert b"\r\n" in payload
     assert payload.replace(b"\r\n", b"").find(b"\n") == -1
@@ -176,7 +207,7 @@ def test_sagawa_matches_sample_headers_and_maps_one_row_per_order() -> None:
     assert row["受注郵便番号"] == "0030003"
     assert row["お届け先名"] == '届け先, "様"'
     assert row["お届け先住所"] == "北海道札幌市北区3-4北館\r\n101号"
-    assert row["請求コード"] == "000123456789"
+    assert row["請求コード"] == ""
     assert (row["郵便種別"], row["元／着払い種別"], row["代引き種別"]) == ("0", "1", "Yes")
 
 
@@ -234,12 +265,12 @@ def test_yamato_matches_sample_headers_and_maps_neko_pos_fields() -> None:
     assert row["届け先郵便番号"] == "0020002"
     assert row["届け先住所"] == "北海道札幌市北区3-4"
     assert row["届け先建物名（アパートマンション名）"] == "北館\r\n101号"
-    assert row["依頼主コード"] == "000987654321"
+    assert row["依頼主コード"] == ""
     assert row["C：品名 購入品"] == "ネットショップ購入品"
     assert (row["コレクト代金引換額（税込）"], row["コレクト内消費税額"]) == ("0", "0")
 
 
-def test_yamato_contract_values_are_configurable() -> None:
+def test_yamato_operational_values_are_configurable() -> None:
     base = config()
     custom = base.model_copy(
         update={
@@ -249,8 +280,6 @@ def test_yamato_contract_values_are_configurable() -> None:
                     "item_name": "雑貨",
                     "collect_amount": "1000",
                     "collect_tax": "90",
-                    "billing_classification_code": "ABC",
-                    "freight_management_number": "0001",
                 }
             )
         }
@@ -262,8 +291,8 @@ def test_yamato_contract_values_are_configurable() -> None:
     assert row["C：品名 購入品"] == "雑貨"
     assert row["コレクト代金引換額（税込）"] == "1000"
     assert row["コレクト内消費税額"] == "90"
-    assert row["請求先分類コード"] == "ABC"
-    assert row["運賃管理番号"] == "0001"
+    assert row["請求先分類コード"] == ""
+    assert row["運賃管理番号"] == ""
 
 
 def test_exports_are_cp932_round_trippable_and_quote_csv_metacharacters() -> None:

@@ -43,15 +43,6 @@ def client_for(app: FastAPI) -> httpx.AsyncClient:
 def config() -> AppConfig:
     return AppConfig.model_validate(
         {
-            "sender": {
-                "company_name": "株式会社テスト",
-                "requester_name": "テスト店",
-                "postal_code": "1000001",
-                "address": "東京都千代田区千代田1-1",
-                "phone": "0312345678",
-            },
-            "sagawa": {"billing_code": "000123456789"},
-            "yamato": {"requester_code": "REQ001"},
             "auth_username": "operator",
             "auth_password": "test-secret",
         }

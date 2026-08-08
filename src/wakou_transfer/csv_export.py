@@ -115,17 +115,11 @@ def _joined_address(address: Address) -> str:
     return f"{address.address1}{address.address2}"
 
 
-def _hyphenated_postal_code(postal_code: str) -> str:
-    normalized = normalize_postal_code(postal_code)
-    return f"{normalized[:3]}-{normalized[3:]}"
-
-
 def _sagawa_row(order: ShippingOrder, config: AppConfig) -> list[str]:
     shipping = order.shipping_address
     billing = order.billing_address or shipping
     shipping_day = f"{order.shipping_date.month}月{order.shipping_date.day}日"
     shipping_compact = order.shipping_date.strftime("%Y%m%d")
-    sender = config.sender
     sagawa = config.sagawa
     delivery_day = shipping_day if sagawa.include_delivery_date else ""
     delivery_compact = shipping_compact if sagawa.include_delivery_date else ""
@@ -160,14 +154,14 @@ def _sagawa_row(order: ShippingOrder, config: AppConfig) -> list[str]:
         sagawa.option4,
         sagawa.option5,
         sagawa.option6,
-        sender.company_name,
-        _hyphenated_postal_code(sender.postal_code),
-        sender.address,
-        sender.phone,
-        sender.phone,
-        sender.postal_code,
-        sender.address,
-        sender.requester_name,
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
         "",
         sagawa.postal_type,
         sagawa.payment_type,
@@ -179,13 +173,12 @@ def _sagawa_row(order: ShippingOrder, config: AppConfig) -> list[str]:
         "",
         "",
         "",
-        config.sagawa.billing_code,
+        "",
     ]
 
 
 def _yamato_row(order: ShippingOrder, config: AppConfig) -> list[str]:
     shipping = order.shipping_address
-    sender = config.sender
     yamato = config.yamato
     shipping_date = order.shipping_date
     return [
@@ -207,13 +200,13 @@ def _yamato_row(order: ShippingOrder, config: AppConfig) -> list[str]:
         shipping.name,
         "",
         "",
-        yamato.requester_code,
-        sender.phone,
         "",
-        sender.postal_code,
-        sender.address,
         "",
-        sender.requester_name,
+        "",
+        "",
+        "",
+        "",
+        "",
         "",
         "",
         yamato.item_name,
@@ -228,8 +221,8 @@ def _yamato_row(order: ShippingOrder, config: AppConfig) -> list[str]:
         "",
         "",
         "",
-        yamato.billing_classification_code,
-        yamato.freight_management_number,
+        "",
+        "",
         "",
     ]
 
